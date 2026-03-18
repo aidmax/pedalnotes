@@ -1,0 +1,28 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+.env
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+junit.xml
+
+# Vitest
+.vitest/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+
+# Claude Code
+.claude/
