@@ -17,11 +17,9 @@ Log structured workout reflections, track subjective feedback, and generate port
 **Your body is the most important sensor.**
 
 <p align="center">
-  <a href="https://youtu.be/rsJLUJeag1c">
-    <img src="https://img.youtube.com/vi/rsJLUJeag1c/maxresdefault.jpg" alt="PedalNotes Demo" width="600" />
-  </a>
+  <img src="assets/demo.gif" alt="PedalNotes Demo" width="600" />
   <br />
-  <em>Watch the demo</em>
+  <a href="https://youtu.be/rsJLUJeag1c"><em>Watch full demo on YouTube</em></a>
 </p>
 
 ## Why PedalNotes?
