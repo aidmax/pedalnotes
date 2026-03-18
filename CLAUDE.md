@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Privacy-focused static React web application for generating structured workout reflection reports with cycling and training metrics. Deployed as static files to AWS S3 with no backend server - all data persists in browser localStorage.
+PedalNotes — a privacy-focused static React web application for cyclists to log structured workout reflections and generate markdown training reports. Deployed as static files to AWS S3 with no backend server - all data persists in browser localStorage.
 
 ## Commands
 

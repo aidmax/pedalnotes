@@ -4,8 +4,8 @@ Guidance for autonomous coding agents working in this repository.
 
 ## 1) Project Overview
 
-- App type: Privacy-focused static React web app (no backend runtime).
-- Purpose: Generate structured workout reflection markdown reports.
+- App type: PedalNotes — privacy-focused static React web app (no backend runtime).
+- Purpose: Training journal for cyclists; generates structured workout reflection markdown reports.
 - Data storage: Browser `localStorage` only.
 - Build output: Static files in `dist/`.
 - Main stack: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Zod, React Hook Form, Vitest.
