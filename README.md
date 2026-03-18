@@ -10,9 +10,19 @@
   A free, privacy-first training journal for cyclists.
 </p>
 
---- Log structured workout reflections, track subjective feedback, and generate portable markdown reports.
+---
+
+Log structured workout reflections, track subjective feedback, and generate portable markdown reports.
 
 **Your body is the most important sensor.**
+
+<p align="center">
+  <a href="https://youtu.be/rsJLUJeag1c">
+    <img src="https://img.youtube.com/vi/rsJLUJeag1c/maxresdefault.jpg" alt="PedalNotes Demo" width="600" />
+  </a>
+  <br />
+  <em>Watch the demo</em>
+</p>
 
 ## Why PedalNotes?
 
