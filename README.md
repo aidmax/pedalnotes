@@ -1,6 +1,16 @@
-# PedalNotes
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png" />
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo.png" />
+    <img src="assets/logo.png" alt="PedalNotes" width="400" />
+  </picture>
+</p>
 
-A free, privacy-first training journal for cyclists. Log structured workout reflections, track subjective feedback, and generate portable markdown reports.
+<p align="center">
+  A free, privacy-first training journal for cyclists.
+</p>
+
+--- Log structured workout reflections, track subjective feedback, and generate portable markdown reports.
 
 **Your body is the most important sensor.**
 
@@ -28,7 +38,7 @@ PedalNotes gives you a structured place to write down what matters most: how you
 ## How It Works
 
 1. Do a workout
-2. Open PedalNotes and fill in the form
+2. Open PedalNotes and fill in only the fields that matter to you right now — basics like duration and distance are already tracked by Strava or your bike computer. Empty fields are simply omitted from the output
 3. Copy or download the markdown report
 4. Store it in your second brain (Obsidian, Notion, plain files)
 
