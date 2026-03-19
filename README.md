@@ -10,6 +10,10 @@
   A free, privacy-first training journal for cyclists.
 </p>
 
+<p align="center">
+  <a href="https://aidmax.github.io/pedalnotes/"><strong>Try it now →</strong></a>
+</p>
+
 ---
 
 Log structured workout reflections, track subjective feedback, and generate portable markdown reports.
