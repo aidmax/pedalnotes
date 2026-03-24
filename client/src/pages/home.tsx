@@ -90,7 +90,7 @@ function formatBulletPoints(text: string): string {
     .join("\n");
 }
 
-function generateMarkdown(data: InsertWorkout): string {
+function generateMarkdown(data: InsertWorkout, dirtyFields: Partial<Record<keyof InsertWorkout, boolean>> = {}): string {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const day = String(date.getDate()).padStart(2, '0');
@@ -100,10 +100,10 @@ function generateMarkdown(data: InsertWorkout): string {
   };
 
   let markdown = `---\n## ${formatDate(data.workoutDate)}\n\n`;
-  
-  markdown += `G: ${data.goal}\n`;
-  markdown += `R: ${data.rpe}\n`;
-  markdown += `F: ${data.feel}\n`;
+
+  if (data.goal) markdown += `G: ${data.goal}\n`;
+  if (dirtyFields.rpe) markdown += `R: ${data.rpe}\n`;
+  if (dirtyFields.feel) markdown += `F: ${data.feel}\n`;
   
   if (data.choIntakePre) {
     markdown += `Ci-Pre: ${data.choIntakePre}\n`;
@@ -198,10 +198,12 @@ export default function Home() {
 
   const watchedValues = form.watch();
 
+  const { dirtyFields } = form.formState;
+
   useEffect(() => {
-    const markdown = generateMarkdown(watchedValues);
+    const markdown = generateMarkdown(watchedValues, dirtyFields as Partial<Record<keyof InsertWorkout, boolean>>);
     setMarkdownOutput(markdown);
-  }, [watchedValues]);
+  }, [watchedValues, dirtyFields]);
 
   const handleCopyToClipboard = async () => {
     try {
