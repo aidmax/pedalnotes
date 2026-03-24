@@ -206,14 +206,15 @@ export default function Home() {
   }, [watchedValues, dirtyFields.rpe, dirtyFields.feel]);
 
   const handleCopyToClipboard = async () => {
+    const exportMarkdown = generateMarkdown(form.getValues(), true, true);
     try {
       // Try modern clipboard API first
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(markdownOutput);
+        await navigator.clipboard.writeText(exportMarkdown);
       } else {
         // Fallback for older browsers or non-secure contexts
         const textArea = document.createElement('textarea');
-        textArea.value = markdownOutput;
+        textArea.value = exportMarkdown;
         textArea.style.position = 'fixed';
         textArea.style.left = '-999999px';
         textArea.style.top = '-999999px';
@@ -244,7 +245,8 @@ export default function Home() {
   };
 
   const handleDownload = () => {
-    const blob = new Blob([markdownOutput], { type: 'text/markdown' });
+    const exportMarkdown = generateMarkdown(form.getValues(), true, true);
+    const blob = new Blob([exportMarkdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

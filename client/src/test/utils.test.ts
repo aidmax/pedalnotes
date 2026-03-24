@@ -177,4 +177,12 @@ describe('generateMarkdown — R/F conditional output', () => {
     const withoutGoal = generateMarkdown({ ...baseWorkout, goal: '' });
     expect(withoutGoal).not.toContain('G:');
   });
+
+  it('export (both flags true) always includes R and F even when user never touched sliders', () => {
+    // Simulates copy/download: user only filled goal, never moved RPE or Feel off defaults
+    const md = generateMarkdown({ ...baseWorkout, goal: 'Recovery spin', rpe: 1, feel: 'N' }, true, true);
+    expect(md).toContain('R: 1');
+    expect(md).toContain('F: N');
+    expect(md).toContain('G: Recovery spin');
+  });
 });
