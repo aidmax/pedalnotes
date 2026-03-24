@@ -90,7 +90,7 @@ function formatBulletPoints(text: string): string {
     .join("\n");
 }
 
-function generateMarkdown(data: InsertWorkout, isDirty = false): string {
+function generateMarkdown(data: InsertWorkout, isRpeDirty = false, isFeelDirty = false): string {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const day = String(date.getDate()).padStart(2, '0');
@@ -102,8 +102,8 @@ function generateMarkdown(data: InsertWorkout, isDirty = false): string {
   let markdown = `---\n## ${formatDate(data.workoutDate)}\n\n`;
 
   if (data.goal) markdown += `G: ${data.goal}\n`;
-  if (isDirty) markdown += `R: ${data.rpe}\n`;
-  if (isDirty) markdown += `F: ${data.feel}\n`;
+  if (isRpeDirty) markdown += `R: ${data.rpe}\n`;
+  if (isFeelDirty) markdown += `F: ${data.feel}\n`;
   
   if (data.choIntakePre) {
     markdown += `Ci-Pre: ${data.choIntakePre}\n`;
@@ -198,12 +198,12 @@ export default function Home() {
 
   const watchedValues = form.watch();
 
-  const { isDirty } = form.formState;
+  const { dirtyFields } = form.formState;
 
   useEffect(() => {
-    const markdown = generateMarkdown(watchedValues, isDirty);
+    const markdown = generateMarkdown(watchedValues, dirtyFields.rpe ?? false, dirtyFields.feel ?? false);
     setMarkdownOutput(markdown);
-  }, [watchedValues, isDirty]);
+  }, [watchedValues, dirtyFields.rpe, dirtyFields.feel]);
 
   const handleCopyToClipboard = async () => {
     try {
