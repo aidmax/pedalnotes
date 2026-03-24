@@ -822,7 +822,7 @@ export default function Home() {
             <Card className="shadow-sm xl:sticky xl:top-24 dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Markdown Preview</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Markdown Output</h2>
                   <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
                     <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                     <span>Live Preview</span>
