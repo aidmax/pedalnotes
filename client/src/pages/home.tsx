@@ -100,8 +100,8 @@ function generateMarkdown(data: InsertWorkout): string {
   };
 
   let markdown = `---\n## ${formatDate(data.workoutDate)}\n\n`;
-  
-  markdown += `G: ${data.goal}\n`;
+
+  if (data.goal) markdown += `G: ${data.goal}\n`;
   markdown += `R: ${data.rpe}\n`;
   markdown += `F: ${data.feel}\n`;
   
@@ -198,20 +198,22 @@ export default function Home() {
 
   const watchedValues = form.watch();
 
+  const { isDirty } = form.formState;
+
   useEffect(() => {
-    const markdown = generateMarkdown(watchedValues);
-    setMarkdownOutput(markdown);
-  }, [watchedValues]);
+    setMarkdownOutput(isDirty ? generateMarkdown(watchedValues) : "");
+  }, [watchedValues, isDirty]);
 
   const handleCopyToClipboard = async () => {
+    const exportMarkdown = generateMarkdown(form.getValues());
     try {
       // Try modern clipboard API first
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(markdownOutput);
+        await navigator.clipboard.writeText(exportMarkdown);
       } else {
         // Fallback for older browsers or non-secure contexts
         const textArea = document.createElement('textarea');
-        textArea.value = markdownOutput;
+        textArea.value = exportMarkdown;
         textArea.style.position = 'fixed';
         textArea.style.left = '-999999px';
         textArea.style.top = '-999999px';
@@ -242,7 +244,8 @@ export default function Home() {
   };
 
   const handleDownload = () => {
-    const blob = new Blob([markdownOutput], { type: 'text/markdown' });
+    const exportMarkdown = generateMarkdown(form.getValues());
+    const blob = new Blob([exportMarkdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
