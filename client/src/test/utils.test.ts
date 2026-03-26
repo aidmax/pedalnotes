@@ -75,7 +75,7 @@ describe('formatBulletPoints', () => {
 });
 
 // Local copy of generateMarkdown from home.tsx for unit testing
-function generateMarkdown(data: InsertWorkout, isRpeDirty = false, isFeelDirty = false): string {
+function generateMarkdown(data: InsertWorkout): string {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const day = String(date.getDate()).padStart(2, '0');
@@ -87,8 +87,8 @@ function generateMarkdown(data: InsertWorkout, isRpeDirty = false, isFeelDirty =
   let markdown = `---\n## ${formatDate(data.workoutDate)}\n\n`;
 
   if (data.goal) markdown += `G: ${data.goal}\n`;
-  if (isRpeDirty) markdown += `R: ${data.rpe}\n`;
-  if (isFeelDirty) markdown += `F: ${data.feel}\n`;
+  markdown += `R: ${data.rpe}\n`;
+  markdown += `F: ${data.feel}\n`;
 
   if (data.choIntakePre) markdown += `Ci-Pre: ${data.choIntakePre}\n`;
   if (data.choIntake) markdown += `Ci: ${data.choIntake}\n`;
@@ -127,62 +127,21 @@ const baseWorkout: InsertWorkout = {
   feel: 'N',
 };
 
-describe('generateMarkdown — R/F conditional output', () => {
-  it('omits R and F on initial load (both flags false)', () => {
+describe('generateMarkdown — R/F output', () => {
+  it('always includes R and F', () => {
     const md = generateMarkdown(baseWorkout);
-    expect(md).not.toContain('R:');
-    expect(md).not.toContain('F:');
+    expect(md).toContain('R: 1');
+    expect(md).toContain('F: N');
   });
 
-  it('omits R and F when only an unrelated field (date) is changed', () => {
-    const md = generateMarkdown({ ...baseWorkout, workoutDate: '2026-03-01' }, false, false);
-    expect(md).not.toContain('R:');
-    expect(md).not.toContain('F:');
-  });
-
-  it('emits R when isRpeDirty is true, omits F when isFeelDirty is false', () => {
-    const md = generateMarkdown({ ...baseWorkout, rpe: 7 }, true, false);
-    expect(md).toContain('R: 7');
-    expect(md).not.toContain('F:');
-  });
-
-  it('emits F when isFeelDirty is true, omits R when isRpeDirty is false', () => {
-    const md = generateMarkdown({ ...baseWorkout, feel: 'G' }, false, true);
-    expect(md).toContain('F: G');
-    expect(md).not.toContain('R:');
-  });
-
-  it('emits both R and F when both flags are true', () => {
-    const md = generateMarkdown({ ...baseWorkout, rpe: 8, feel: 'S' }, true, true);
+  it('reflects rpe and feel values', () => {
+    const md = generateMarkdown({ ...baseWorkout, rpe: 8, feel: 'S' });
     expect(md).toContain('R: 8');
     expect(md).toContain('F: S');
   });
 
-  it('emits R: 1 (default value) when intentionally set (isRpeDirty=true)', () => {
-    // RPE=1 is the default but a legitimate post-workout value (recovery spin)
-    const md = generateMarkdown({ ...baseWorkout, rpe: 1 }, true, false);
-    expect(md).toContain('R: 1');
-  });
-
-  it('emits F: N (default value) when intentionally set (isFeelDirty=true)', () => {
-    // Feel=N is the default but a legitimate value (normal day)
-    const md = generateMarkdown({ ...baseWorkout, feel: 'N' }, false, true);
-    expect(md).toContain('F: N');
-  });
-
-  it('emits G based on value truthiness regardless of dirty flags', () => {
-    const withGoal = generateMarkdown({ ...baseWorkout, goal: 'Zone 2 base' });
-    expect(withGoal).toContain('G: Zone 2 base');
-
-    const withoutGoal = generateMarkdown({ ...baseWorkout, goal: '' });
-    expect(withoutGoal).not.toContain('G:');
-  });
-
-  it('export (both flags true) always includes R and F even when user never touched sliders', () => {
-    // Simulates copy/download: user only filled goal, never moved RPE or Feel off defaults
-    const md = generateMarkdown({ ...baseWorkout, goal: 'Recovery spin', rpe: 1, feel: 'N' }, true, true);
-    expect(md).toContain('R: 1');
-    expect(md).toContain('F: N');
-    expect(md).toContain('G: Recovery spin');
+  it('includes G when goal is set, omits it when empty', () => {
+    expect(generateMarkdown({ ...baseWorkout, goal: 'Zone 2 base' })).toContain('G: Zone 2 base');
+    expect(generateMarkdown({ ...baseWorkout, goal: '' })).not.toContain('G:');
   });
 });

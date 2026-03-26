@@ -90,7 +90,7 @@ function formatBulletPoints(text: string): string {
     .join("\n");
 }
 
-function generateMarkdown(data: InsertWorkout, isRpeDirty = false, isFeelDirty = false): string {
+function generateMarkdown(data: InsertWorkout): string {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const day = String(date.getDate()).padStart(2, '0');
@@ -102,8 +102,8 @@ function generateMarkdown(data: InsertWorkout, isRpeDirty = false, isFeelDirty =
   let markdown = `---\n## ${formatDate(data.workoutDate)}\n\n`;
 
   if (data.goal) markdown += `G: ${data.goal}\n`;
-  if (isRpeDirty) markdown += `R: ${data.rpe}\n`;
-  if (isFeelDirty) markdown += `F: ${data.feel}\n`;
+  markdown += `R: ${data.rpe}\n`;
+  markdown += `F: ${data.feel}\n`;
   
   if (data.choIntakePre) {
     markdown += `Ci-Pre: ${data.choIntakePre}\n`;
@@ -198,15 +198,14 @@ export default function Home() {
 
   const watchedValues = form.watch();
 
-  const { dirtyFields } = form.formState;
+  const { isDirty } = form.formState;
 
   useEffect(() => {
-    const markdown = generateMarkdown(watchedValues, dirtyFields.rpe ?? false, dirtyFields.feel ?? false);
-    setMarkdownOutput(markdown);
-  }, [watchedValues, dirtyFields.rpe, dirtyFields.feel]);
+    setMarkdownOutput(isDirty ? generateMarkdown(watchedValues) : "");
+  }, [watchedValues, isDirty]);
 
   const handleCopyToClipboard = async () => {
-    const exportMarkdown = generateMarkdown(form.getValues(), true, true);
+    const exportMarkdown = generateMarkdown(form.getValues());
     try {
       // Try modern clipboard API first
       if (navigator.clipboard && window.isSecureContext) {
@@ -245,7 +244,7 @@ export default function Home() {
   };
 
   const handleDownload = () => {
-    const exportMarkdown = generateMarkdown(form.getValues(), true, true);
+    const exportMarkdown = generateMarkdown(form.getValues());
     const blob = new Blob([exportMarkdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
