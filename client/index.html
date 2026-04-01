@@ -14,6 +14,18 @@
     <link rel="shortcut icon" href="/favicon.ico?v=2" />
     <!-- Apple touch icon -->
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon-32x32.png?v=2" />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("theme");
+          if (stored === "dark") {
+            document.documentElement.classList.add("dark");
+          } else if (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (_) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

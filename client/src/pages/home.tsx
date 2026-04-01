@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/hooks/use-theme";
 import {
   Zap,
   Copy,
@@ -26,7 +27,9 @@ import {
   Smile,
   Calendar,
   Info,
-  Utensils
+  Utensils,
+  Sun,
+  Moon
 } from "lucide-react";
 
 const rpeOptions = [
@@ -170,6 +173,7 @@ function generateMarkdown(data: InsertWorkout): string {
 
 export default function Home() {
   const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
   const [markdownOutput, setMarkdownOutput] = useState("");
   
   const form = useForm<InsertWorkout>({
@@ -276,6 +280,13 @@ export default function Home() {
             <div className="text-sm text-gray-500 dark:text-gray-400 text-center sm:text-right">
               Privacy-first training journal for cyclists
             </div>
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+            >
+              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
           </div>
         </div>
       </header>
@@ -296,14 +307,14 @@ export default function Home() {
                 <Form {...form}>
                   <form className="space-y-6">
                     {/* Date Section */}
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                       <FormField
                         control={form.control}
                         name="workoutDate"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-blue-600" />
+                              <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                               Workout Date
                             </FormLabel>
                             <FormControl>
