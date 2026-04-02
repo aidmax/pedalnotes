@@ -60,6 +60,15 @@
   }
 }
 
+/* Override browser autofill background in dark mode */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px hsl(222, 84%, 4.9%) inset !important;
+  -webkit-text-fill-color: hsl(210, 40%, 98%) !important;
+}
+
 .brand-blue {
   color: hsl(217, 91%, 60%);
 }
