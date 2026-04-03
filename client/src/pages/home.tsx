@@ -295,13 +295,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-center py-4 gap-2">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
-                  <rect width="32" height="32" rx="5" fill="#0d1117"/>
-                  <path d="M 16.000 7.500 L 16.000 3.500 L 19.863 4.112 L 18.627 7.916 A 8.5 8.5 0 0 1 22.010 9.990 L 24.839 7.161 L 27.138 10.325 L 23.574 12.141 A 8.5 8.5 0 0 1 24.500 16.000 L 28.500 16.000 L 27.888 19.863 L 24.084 18.627 A 8.5 8.5 0 0 1 22.010 22.010 L 24.839 24.839 L 21.675 27.138 L 19.859 23.574 A 8.5 8.5 0 0 1 16.000 24.500 L 16.000 28.500 L 12.137 27.888 L 13.373 24.084 A 8.5 8.5 0 0 1 9.990 22.010 L 7.161 24.839 L 4.862 21.675 L 8.426 19.859 A 8.5 8.5 0 0 1 7.500 16.000 L 3.500 16.000 L 4.112 12.137 L 7.916 13.373 A 8.5 8.5 0 0 1 9.990 9.990 L 7.161 7.161 L 10.325 4.862 L 12.141 8.426 A 8.5 8.5 0 0 1 16.000 7.500 Z" fill="#4b5563"/>
-                  <circle cx="16" cy="16" r="4.5" fill="#0d1117"/>
-                  <polyline points="4,16 8,16 10,11 12,21 14,13 16,19 18,14 20,16 28,16" fill="none" stroke="#22d3ee" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+              <div className="w-8 h-8 bg-brand-blue rounded-lg flex items-center justify-center">
+                <Zap className="w-5 h-5 text-white" />
               </div>
               <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">PedalNotes</h1>
             </div>

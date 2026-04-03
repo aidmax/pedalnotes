@@ -17,7 +17,7 @@ export default defineConfig({
         name: "PedalNotes — Training Journal for Cyclists",
         short_name: "PedalNotes",
         description: "A free, privacy-first training journal for cyclists. Log structured workout reflections in markdown.",
-        theme_color: "#0d1117",
+        theme_color: "#3b82f6",
         background_color: "#f9fafb",
         display: "standalone",
         orientation: "portrait",
