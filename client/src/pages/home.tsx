@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
+import { useFormPersistence } from "@/hooks/use-form-persistence";
 import {
   Zap,
   Copy,
@@ -29,7 +30,8 @@ import {
   Info,
   Utensils,
   Sun,
-  Moon
+  Moon,
+  RotateCcw
 } from "lucide-react";
 
 const rpeOptions = [
@@ -66,6 +68,27 @@ const lgtOptions = [
   { value: "Y", label: "Yellow (Y) - Caution advised" },
   { value: "R", label: "Red (R) - Recovery needed" }
 ];
+
+const defaultWorkoutValues: InsertWorkout = {
+  workoutDate: new Date().toISOString().split('T')[0],
+  goal: "",
+  rpe: 1,
+  feel: "N",
+  choIntakePre: "",
+  choIntake: "",
+  choIntakePost: "",
+  normalizedPower: undefined,
+  tss: undefined,
+  avgHeartRate: undefined,
+  hrv: "",
+  rMSSD: undefined,
+  rhr: undefined,
+  trainerRoadRpe: undefined,
+  trainerRoadLgt: undefined,
+  whatWentWell: "",
+  whatCouldBeImproved: "",
+  description: ""
+};
 
 function formatBulletPoints(text: string): string {
   if (!text) return "";
@@ -178,26 +201,11 @@ export default function Home() {
   
   const form = useForm<InsertWorkout>({
     resolver: zodResolver(insertWorkoutSchema),
-    defaultValues: {
-      workoutDate: new Date().toISOString().split('T')[0],
-      goal: "",
-      rpe: 1,
-      feel: "N",
-      choIntakePre: "",
-      choIntake: "",
-      choIntakePost: "",
-      normalizedPower: undefined,
-      tss: undefined,
-      avgHeartRate: undefined,
-      hrv: "",
-      rMSSD: undefined,
-      rhr: undefined,
-      trainerRoadRpe: undefined,
-      trainerRoadLgt: undefined,
-      whatWentWell: "",
-      whatCouldBeImproved: "",
-      description: ""
-    }
+    defaultValues: defaultWorkoutValues
+  });
+
+  const { wasRestored, clearDraft } = useFormPersistence(form, {
+    key: "pedalnotes-draft",
   });
 
   const watchedValues = form.watch();
@@ -205,8 +213,17 @@ export default function Home() {
   const { isDirty } = form.formState;
 
   useEffect(() => {
-    setMarkdownOutput(isDirty ? generateMarkdown(watchedValues) : "");
-  }, [watchedValues, isDirty]);
+    setMarkdownOutput((isDirty || wasRestored) ? generateMarkdown(watchedValues) : "");
+  }, [watchedValues, isDirty, wasRestored]);
+
+  useEffect(() => {
+    if (wasRestored) {
+      toast({
+        title: "Draft restored",
+        description: "Your previous workout entry was recovered.",
+      });
+    }
+  }, [wasRestored]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCopyToClipboard = async () => {
     const exportMarkdown = generateMarkdown(form.getValues());
@@ -245,6 +262,12 @@ export default function Home() {
         variant: "destructive"
       });
     }
+  };
+
+  const handleClearForm = () => {
+    form.reset(defaultWorkoutValues);
+    clearDraft();
+    toast({ title: "Form cleared" });
   };
 
   const handleDownload = () => {
@@ -823,6 +846,10 @@ export default function Home() {
                       <Button type="button" className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white" onClick={handleDownload}>
                         <Download className="w-4 h-4 mr-2" />
                         Download
+                      </Button>
+                      <Button type="button" variant="outline" className="sm:flex-none" onClick={handleClearForm}>
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Clear
                       </Button>
                     </div>
                   </form>

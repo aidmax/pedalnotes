@@ -44,19 +44,40 @@ npx vitest -t "should validate a complete workout"  # Run test by name
 ### Directory Structure
 ```
 client/src/
-├── pages/home.tsx       # Main workout form (primary component)
-├── components/ui/       # shadcn/ui components
-├── lib/localStorage.ts  # LocalStorageWorkouts data class
-└── test/                # Vitest tests
+├── pages/home.tsx                    # Main workout form (primary component)
+├── components/ui/                    # shadcn/ui components
+├── hooks/
+│   ├── use-form-persistence.ts       # Auto-save/restore form draft to localStorage
+│   ├── use-theme.ts                  # Dark/light theme toggle
+│   └── use-toast.ts                  # Toast notification system
+└── test/                             # Vitest tests
 shared/
-└── schema-static.ts     # Zod validation schema (active schema)
-scripts/                 # AWS S3 deployment automation
+└── schema-static.ts                  # Zod validation schema (active schema)
+client/public/
+├── pwa-192x192.png                   # PWA icon 192px
+├── pwa-512x512.png                   # PWA icon 512px (also used as maskable)
+└── apple-touch-icon.png              # Apple touch icon 180px
+scripts/                              # AWS S3 deployment automation
 ```
 
 ### Key Files
 - `client/src/pages/home.tsx` - Main form component with markdown generation
 - `shared/schema-static.ts` - Zod schema defining workout data structure
-- `client/src/lib/localStorage.ts` - Singleton class for localStorage CRUD operations
+- `client/src/hooks/use-form-persistence.ts` - Debounced form draft auto-save/restore
+
+### PWA Setup
+- `vite-plugin-pwa` generates the service worker (Workbox) and injects manifest link automatically
+- Manifest config is in `vite.config.ts` → VitePWA plugin options
+- `scope` and `start_url` are derived from Vite's `base` setting (respects `VITE_BASE_PATH`)
+- Service worker uses `registerType: 'autoUpdate'` — no manual registration code needed
+- Draft localStorage key: `"pedalnotes-draft"` (single draft, last-write-wins)
+
+### Form Persistence
+- `useFormPersistence(form, { key, debounceMs })` auto-saves on every change (500ms debounce)
+- On mount, if a draft exists it calls `form.reset(parsed)` and sets `wasRestored = true`
+- Corrupt/unparseable drafts are silently discarded (`console.error` logged)
+- `QuotaExceededError` on write is caught; form still works without persistence
+- `clearDraft()` removes the localStorage key and resets `wasRestored`
 
 ### Data Flow
 1. User fills form → React Hook Form manages state
