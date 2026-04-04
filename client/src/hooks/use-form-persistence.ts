@@ -15,7 +15,6 @@ export function useFormPersistence<T extends FieldValues>(
 } {
   const { key, debounceMs = 500 } = options;
   const [wasRestored, setWasRestored] = useState(false);
-  const isRestoringRef = useRef(false);
 
   // On mount: restore draft from localStorage
   useEffect(() => {
@@ -23,10 +22,8 @@ export function useFormPersistence<T extends FieldValues>(
       const saved = localStorage.getItem(key);
       if (saved) {
         const parsed = JSON.parse(saved);
-        isRestoringRef.current = true;
         form.reset(parsed);
         setWasRestored(true);
-        isRestoringRef.current = false;
       }
     } catch (err) {
       console.error("[use-form-persistence] Failed to restore draft:", err);
@@ -36,8 +33,11 @@ export function useFormPersistence<T extends FieldValues>(
 
   // On form change: debounced write to localStorage
   useEffect(() => {
+    const timerRef = { current: undefined as ReturnType<typeof setTimeout> | undefined };
+
     const subscription = form.watch((values) => {
-      const timer = setTimeout(() => {
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
         try {
           localStorage.setItem(key, JSON.stringify(values));
         } catch (err) {
@@ -46,11 +46,12 @@ export function useFormPersistence<T extends FieldValues>(
           }
         }
       }, debounceMs);
-
-      return () => clearTimeout(timer);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timerRef.current);
+    };
   }, [form, key, debounceMs]);
 
   const clearDraft = () => {

@@ -69,26 +69,28 @@ const lgtOptions = [
   { value: "R", label: "Red (R) - Recovery needed" }
 ];
 
-const defaultWorkoutValues: InsertWorkout = {
-  workoutDate: new Date().toISOString().split('T')[0],
-  goal: "",
-  rpe: 1,
-  feel: "N",
-  choIntakePre: "",
-  choIntake: "",
-  choIntakePost: "",
-  normalizedPower: undefined,
-  tss: undefined,
-  avgHeartRate: undefined,
-  hrv: "",
-  rMSSD: undefined,
-  rhr: undefined,
-  trainerRoadRpe: undefined,
-  trainerRoadLgt: undefined,
-  whatWentWell: "",
-  whatCouldBeImproved: "",
-  description: ""
-};
+function getDefaultWorkoutValues(): InsertWorkout {
+  return {
+    workoutDate: new Date().toISOString().split('T')[0],
+    goal: "",
+    rpe: 1,
+    feel: "N",
+    choIntakePre: "",
+    choIntake: "",
+    choIntakePost: "",
+    normalizedPower: undefined,
+    tss: undefined,
+    avgHeartRate: undefined,
+    hrv: "",
+    rMSSD: undefined,
+    rhr: undefined,
+    trainerRoadRpe: undefined,
+    trainerRoadLgt: undefined,
+    whatWentWell: "",
+    whatCouldBeImproved: "",
+    description: ""
+  };
+}
 
 function formatBulletPoints(text: string): string {
   if (!text) return "";
@@ -201,7 +203,7 @@ export default function Home() {
   
   const form = useForm<InsertWorkout>({
     resolver: zodResolver(insertWorkoutSchema),
-    defaultValues: defaultWorkoutValues
+    defaultValues: getDefaultWorkoutValues()
   });
 
   const { wasRestored, clearDraft } = useFormPersistence(form, {
@@ -265,7 +267,7 @@ export default function Home() {
   };
 
   const handleClearForm = () => {
-    form.reset(defaultWorkoutValues);
+    form.reset(getDefaultWorkoutValues());
     clearDraft();
     toast({ title: "Form cleared" });
   };
