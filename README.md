@@ -44,8 +44,29 @@ PedalNotes gives you a structured place to write down what matters most: how you
 - Fueling tracking (pre / during / post workout)
 - Real-time markdown preview
 - Copy to clipboard or download reports
-- Works offline, runs entirely in the browser
+- **PWA** — installs to your home screen, works fully offline, form data auto-saved so you never lose a draft
 - Zero cost to host on AWS Free Tier
+
+## Installing as a PWA
+
+PedalNotes can be installed as a Progressive Web App so it runs standalone (no browser chrome) and is kept in memory more reliably on iOS/Android.
+
+**Android (Chrome):**
+1. Open the app in Chrome
+2. Tap the ⋮ menu → **Add to Home screen** (or look for the install prompt in the address bar)
+3. Tap **Install**
+
+**iOS (Safari):**
+1. Open the app in Safari
+2. Tap the Share button (box with arrow)
+3. Scroll down and tap **Add to Home Screen**
+4. Tap **Add**
+
+**Desktop (Chrome / Edge):**
+1. Click the install icon (⊕) in the address bar
+2. Click **Install**
+
+Once installed, the app loads instantly from cache and works without a network connection. Your form draft is auto-saved to localStorage on every change, so data is never lost when switching apps or closing the browser.
 
 ## How It Works
 
