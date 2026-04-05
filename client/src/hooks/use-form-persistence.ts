@@ -31,13 +31,13 @@ export function useFormPersistence<T extends FieldValues>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
   // On form change: debounced write to localStorage
   useEffect(() => {
-    const timerRef = { current: undefined as ReturnType<typeof setTimeout> | undefined };
-
     const subscription = form.watch((values) => {
-      clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
         try {
           localStorage.setItem(key, JSON.stringify(values));
         } catch (err) {
@@ -50,11 +50,12 @@ export function useFormPersistence<T extends FieldValues>(
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(timerRef.current);
+      clearTimeout(debounceTimerRef.current);
     };
   }, [form, key, debounceMs]);
 
   const clearDraft = () => {
+    clearTimeout(debounceTimerRef.current);
     try {
       localStorage.removeItem(key);
     } catch (_) {}

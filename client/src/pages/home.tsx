@@ -253,6 +253,7 @@ export default function Home() {
       }
       
       clearDraft();
+      form.reset(getDefaultWorkoutValues());
       toast({
         title: "Copied to clipboard",
         description: "Markdown has been copied to your clipboard."
