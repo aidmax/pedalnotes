@@ -252,6 +252,7 @@ export default function Home() {
         }
       }
       
+      clearDraft();
       toast({
         title: "Copied to clipboard",
         description: "Markdown has been copied to your clipboard."
