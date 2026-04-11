@@ -7,7 +7,7 @@ import { useFormPersistence } from "@/hooks/use-form-persistence";
 
 const DRAFT_KEY = "pedalnotes-draft-test";
 const ONE_HOUR_MS = 60 * 60 * 1000;
-const TWENTY_FOUR_HOURS_MS = 24 * ONE_HOUR_MS;
+const EIGHT_HOURS_MS = 8 * ONE_HOUR_MS;
 
 const defaultValues: InsertWorkout = {
   workoutDate: "2026-01-01",
@@ -98,7 +98,7 @@ describe("useFormPersistence", () => {
   });
 
   it("discards draft that exceeds maxAgeMs and does not restore", () => {
-    const expiredSavedAt = Date.now() - TWENTY_FOUR_HOURS_MS - 1;
+    const expiredSavedAt = Date.now() - EIGHT_HOURS_MS - 1;
     const savedDraft = makeDraft({ ...defaultValues, goal: "Old ride" }, expiredSavedAt);
 
     const { result } = renderFormAndPersistence(savedDraft);

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FieldValues, UseFormReturn } from "react-hook-form";
 
-const DEFAULT_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+const DEFAULT_MAX_AGE_MS = 8 * 60 * 60 * 1000; // 8 hours
 
 interface UseFormPersistenceOptions {
   key: string;
