@@ -29,13 +29,24 @@ export function useFormPersistence<T extends FieldValues>(
     try {
       const saved = localStorage.getItem(key);
       if (saved) {
-        const parsed: PersistedDraft<T> = JSON.parse(saved);
-        const age = Date.now() - parsed.savedAt;
+        const parsed: unknown = JSON.parse(saved);
+        if (
+          typeof parsed !== "object" ||
+          parsed === null ||
+          typeof (parsed as Record<string, unknown>).savedAt !== "number" ||
+          !(parsed as Record<string, unknown>).data
+        ) {
+          // Discard drafts in old format (no savedAt) or otherwise malformed
+          localStorage.removeItem(key);
+          return;
+        }
+        const draft = parsed as PersistedDraft<T>;
+        const age = Date.now() - draft.savedAt;
         if (age > maxAgeMs) {
           localStorage.removeItem(key);
           return;
         }
-        form.reset(parsed.data);
+        form.reset(draft.data);
         setWasRestored(true);
       }
     } catch (err) {

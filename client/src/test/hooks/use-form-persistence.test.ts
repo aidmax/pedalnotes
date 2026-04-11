@@ -129,6 +129,17 @@ describe("useFormPersistence", () => {
     expect(result.current.form.getValues("goal")).toBe("");
   });
 
+  it("discards old-format draft (no savedAt) and does not set wasRestored", () => {
+    // Simulate a draft written by the previous version of the hook (plain values, no savedAt)
+    const oldFormatDraft = JSON.stringify({ ...defaultValues, goal: "Old format ride" });
+
+    const { result } = renderFormAndPersistence(oldFormatDraft);
+
+    expect(result.current.wasRestored).toBe(false);
+    expect(result.current.form.getValues("goal")).toBe("");
+    expect(localStorage.getItem(DRAFT_KEY)).toBeNull();
+  });
+
   it("handles corrupt localStorage data without crashing", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
