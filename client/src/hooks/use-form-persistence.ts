@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { FieldValues, UseFormReturn } from "react-hook-form";
 
+const DEFAULT_MAX_AGE_MS = 8 * 60 * 60 * 1000; // 8 hours
+
 interface UseFormPersistenceOptions {
   key: string;
   debounceMs?: number;
+  maxAgeMs?: number;
+}
+
+interface PersistedDraft<T> {
+  data: T;
+  savedAt: number;
 }
 
 export function useFormPersistence<T extends FieldValues>(
@@ -13,16 +21,32 @@ export function useFormPersistence<T extends FieldValues>(
   wasRestored: boolean;
   clearDraft: () => void;
 } {
-  const { key, debounceMs = 500 } = options;
+  const { key, debounceMs = 500, maxAgeMs = DEFAULT_MAX_AGE_MS } = options;
   const [wasRestored, setWasRestored] = useState(false);
 
-  // On mount: restore draft from localStorage
+  // On mount: restore draft from localStorage if within maxAgeMs
   useEffect(() => {
     try {
       const saved = localStorage.getItem(key);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        form.reset(parsed);
+        const parsed: unknown = JSON.parse(saved);
+        if (
+          typeof parsed !== "object" ||
+          parsed === null ||
+          typeof (parsed as Record<string, unknown>).savedAt !== "number" ||
+          !(parsed as Record<string, unknown>).data
+        ) {
+          // Discard drafts in old format (no savedAt) or otherwise malformed
+          localStorage.removeItem(key);
+          return;
+        }
+        const draft = parsed as PersistedDraft<T>;
+        const age = Date.now() - draft.savedAt;
+        if (age > maxAgeMs) {
+          localStorage.removeItem(key);
+          return;
+        }
+        form.reset(draft.data);
         setWasRestored(true);
       }
     } catch (err) {
@@ -39,7 +63,8 @@ export function useFormPersistence<T extends FieldValues>(
       clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = setTimeout(() => {
         try {
-          localStorage.setItem(key, JSON.stringify(values));
+          const draft: PersistedDraft<typeof values> = { data: values, savedAt: Date.now() };
+          localStorage.setItem(key, JSON.stringify(draft));
         } catch (err) {
           if (err instanceof DOMException && err.name === "QuotaExceededError") {
             console.error("[use-form-persistence] localStorage quota exceeded");
