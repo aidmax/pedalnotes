@@ -6,6 +6,8 @@ import { insertWorkoutSchema, type InsertWorkout } from "@shared/schema-static";
 import { useFormPersistence } from "@/hooks/use-form-persistence";
 
 const DRAFT_KEY = "pedalnotes-draft-test";
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const TWENTY_FOUR_HOURS_MS = 24 * ONE_HOUR_MS;
 
 const defaultValues: InsertWorkout = {
   workoutDate: "2026-01-01",
@@ -28,7 +30,11 @@ const defaultValues: InsertWorkout = {
   description: "",
 };
 
-function renderFormAndPersistence(initialLocalStorage?: string) {
+function makeDraft(values: InsertWorkout, savedAt: number) {
+  return JSON.stringify({ data: values, savedAt });
+}
+
+function renderFormAndPersistence(initialLocalStorage?: string, maxAgeMs?: number) {
   if (initialLocalStorage !== undefined) {
     localStorage.setItem(DRAFT_KEY, initialLocalStorage);
   }
@@ -38,7 +44,7 @@ function renderFormAndPersistence(initialLocalStorage?: string) {
       resolver: zodResolver(insertWorkoutSchema),
       defaultValues,
     });
-    const persistence = useFormPersistence(form, { key: DRAFT_KEY, debounceMs: 0 });
+    const persistence = useFormPersistence(form, { key: DRAFT_KEY, debounceMs: 0, ...(maxAgeMs !== undefined && { maxAgeMs }) });
     return { form, ...persistence };
   });
 }
@@ -68,11 +74,12 @@ describe("useFormPersistence", () => {
     const saved = localStorage.getItem(DRAFT_KEY);
     expect(saved).not.toBeNull();
     const parsed = JSON.parse(saved!);
-    expect(parsed.goal).toBe("Endurance ride");
+    expect(parsed.data.goal).toBe("Endurance ride");
+    expect(typeof parsed.savedAt).toBe("number");
   });
 
   it("restores draft on mount and sets wasRestored=true", () => {
-    const savedDraft = JSON.stringify({ ...defaultValues, goal: "Recovery ride", workoutDate: "2025-12-01" });
+    const savedDraft = makeDraft({ ...defaultValues, goal: "Recovery ride", workoutDate: "2025-12-01" }, Date.now());
 
     const { result } = renderFormAndPersistence(savedDraft);
 
@@ -83,11 +90,43 @@ describe("useFormPersistence", () => {
 
   it("preserves persisted date on restore (does not overwrite with today)", () => {
     const pastDate = "2024-06-15";
-    const savedDraft = JSON.stringify({ ...defaultValues, workoutDate: pastDate });
+    const savedDraft = makeDraft({ ...defaultValues, workoutDate: pastDate }, Date.now());
 
     const { result } = renderFormAndPersistence(savedDraft);
 
     expect(result.current.form.getValues("workoutDate")).toBe(pastDate);
+  });
+
+  it("discards draft that exceeds maxAgeMs and does not restore", () => {
+    const expiredSavedAt = Date.now() - TWENTY_FOUR_HOURS_MS - 1;
+    const savedDraft = makeDraft({ ...defaultValues, goal: "Old ride" }, expiredSavedAt);
+
+    const { result } = renderFormAndPersistence(savedDraft);
+
+    expect(result.current.wasRestored).toBe(false);
+    expect(result.current.form.getValues("goal")).toBe("");
+    expect(localStorage.getItem(DRAFT_KEY)).toBeNull();
+  });
+
+  it("restores draft that is within maxAgeMs", () => {
+    const recentSavedAt = Date.now() - ONE_HOUR_MS;
+    const savedDraft = makeDraft({ ...defaultValues, goal: "Recent ride" }, recentSavedAt);
+
+    const { result } = renderFormAndPersistence(savedDraft);
+
+    expect(result.current.wasRestored).toBe(true);
+    expect(result.current.form.getValues("goal")).toBe("Recent ride");
+  });
+
+  it("discards draft older than custom maxAgeMs", () => {
+    const customMaxAgeMs = ONE_HOUR_MS;
+    const twoHoursAgo = Date.now() - 2 * ONE_HOUR_MS;
+    const savedDraft = makeDraft({ ...defaultValues, goal: "Old ride" }, twoHoursAgo);
+
+    const { result } = renderFormAndPersistence(savedDraft, customMaxAgeMs);
+
+    expect(result.current.wasRestored).toBe(false);
+    expect(result.current.form.getValues("goal")).toBe("");
   });
 
   it("handles corrupt localStorage data without crashing", () => {
@@ -103,7 +142,7 @@ describe("useFormPersistence", () => {
   });
 
   it("clearDraft removes key from localStorage and resets wasRestored", async () => {
-    const savedDraft = JSON.stringify({ ...defaultValues, goal: "Sprint session" });
+    const savedDraft = makeDraft({ ...defaultValues, goal: "Sprint session" }, Date.now());
     const { result } = renderFormAndPersistence(savedDraft);
 
     expect(result.current.wasRestored).toBe(true);
