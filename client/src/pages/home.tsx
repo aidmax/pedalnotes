@@ -10,9 +10,11 @@ import { Slider } from "@/components/ui/slider";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
 import { useFormPersistence } from "@/hooks/use-form-persistence";
+import { useSectionState, type SectionId } from "@/hooks/use-section-state";
 import {
   Zap,
   Copy,
@@ -33,6 +35,34 @@ import {
   Moon,
   RotateCcw
 } from "lucide-react";
+
+const SECTION_DEFAULTS: Record<SectionId, boolean> = {
+  "core-metrics": true,
+  "fueling": false,
+  "performance-metrics": false,
+  "recovery-metrics": false,
+  "reflection": true,
+};
+
+const FIELD_TO_SECTION: Partial<Record<keyof InsertWorkout, SectionId>> = {
+  goal: "core-metrics",
+  rpe: "core-metrics",
+  feel: "core-metrics",
+  trainerRoadRpe: "core-metrics",
+  choIntakePre: "fueling",
+  choIntake: "fueling",
+  choIntakePost: "fueling",
+  normalizedPower: "performance-metrics",
+  tss: "performance-metrics",
+  avgHeartRate: "performance-metrics",
+  hrv: "recovery-metrics",
+  rMSSD: "recovery-metrics",
+  rhr: "recovery-metrics",
+  trainerRoadLgt: "recovery-metrics",
+  whatWentWell: "reflection",
+  whatCouldBeImproved: "reflection",
+  description: "reflection",
+};
 
 const rpeOptions = [
   { value: "1", label: "1 - Nothing at all" },
@@ -210,9 +240,32 @@ export default function Home() {
     key: "pedalnotes-draft",
   });
 
+  const { sectionStates, toggleSection, setSection } = useSectionState({
+    key: "pedalnotes-sections",
+    defaults: SECTION_DEFAULTS,
+  });
+
   const watchedValues = form.watch();
 
   const { isDirty } = form.formState;
+
+  const allExpanded = Object.values(sectionStates).every(Boolean);
+
+  function expandAllOrCollapseAll() {
+    const target = !allExpanded;
+    (["core-metrics", "fueling", "performance-metrics", "recovery-metrics", "reflection"] as SectionId[]).forEach(
+      (id) => setSection(id, target)
+    );
+  }
+
+  function autoExpandErrorSections() {
+    const errors = form.formState.errors;
+    for (const [field, sectionId] of Object.entries(FIELD_TO_SECTION)) {
+      if (errors[field as keyof InsertWorkout]) {
+        setSection(sectionId!, true);
+      }
+    }
+  }
 
   useEffect(() => {
     setMarkdownOutput((isDirty || wasRestored) ? generateMarkdown(watchedValues) : "");
@@ -228,6 +281,8 @@ export default function Home() {
   }, [wasRestored]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCopyToClipboard = async () => {
+    await form.trigger();
+    autoExpandErrorSections();
     const exportMarkdown = generateMarkdown(form.getValues());
     try {
       // Try modern clipboard API first
@@ -272,7 +327,9 @@ export default function Home() {
     toast({ title: "Form cleared" });
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    await form.trigger();
+    autoExpandErrorSections();
     const exportMarkdown = generateMarkdown(form.getValues());
     const blob = new Blob([exportMarkdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
@@ -325,7 +382,16 @@ export default function Home() {
             <Card className="shadow-sm dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-4 sm:p-6">
                 <div className="mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Workout Details</h2>
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Workout Details</h2>
+                    <button
+                      type="button"
+                      onClick={expandAllOrCollapseAll}
+                      className="text-sm text-blue-500 hover:underline"
+                    >
+                      {allExpanded ? "Collapse all" : "Expand all"}
+                    </button>
+                  </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Fill in your cycling workout information to generate a structured markdown report.</p>
                 </div>
 
@@ -352,9 +418,18 @@ export default function Home() {
                     </div>
 
                     {/* Core Metrics Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-md font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600 pb-2">Core Metrics</h3>
-                      
+                    <CollapsibleSection
+                      id="core-metrics"
+                      title="Core Metrics"
+                      isOpen={sectionStates["core-metrics"]}
+                      onOpenChange={() => toggleSection("core-metrics")}
+                      hasData={
+                        !!watchedValues.goal ||
+                        watchedValues.rpe !== 1 ||
+                        watchedValues.feel !== "N" ||
+                        watchedValues.trainerRoadRpe !== undefined
+                      }
+                    >
                       <FormField
                         control={form.control}
                         name="goal"
@@ -536,15 +611,21 @@ export default function Home() {
                         )}
                       />
 
-                    </div>
+                    </CollapsibleSection>
 
                     {/* Fueling Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-md font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600 pb-2 flex items-center gap-2">
-                        <Utensils className="w-4 h-4 text-orange-500" />
-                        Fueling
-                      </h3>
-
+                    <CollapsibleSection
+                      id="fueling"
+                      title="Fueling"
+                      icon={<Utensils className="w-4 h-4 text-orange-500" />}
+                      isOpen={sectionStates["fueling"]}
+                      onOpenChange={() => toggleSection("fueling")}
+                      hasData={
+                        !!watchedValues.choIntakePre ||
+                        !!watchedValues.choIntake ||
+                        !!watchedValues.choIntakePost
+                      }
+                    >
                       <FormField
                         control={form.control}
                         name="choIntakePre"
@@ -595,12 +676,21 @@ export default function Home() {
                           </FormItem>
                         )}
                       />
-                    </div>
+                    </CollapsibleSection>
 
                     {/* Performance Metrics Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-md font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600 pb-2">Performance Metrics</h3>
-                      
+                    <CollapsibleSection
+                      id="performance-metrics"
+                      title="Performance Metrics"
+                      isOpen={sectionStates["performance-metrics"]}
+                      onOpenChange={() => toggleSection("performance-metrics")}
+                      hasData={
+                        watchedValues.normalizedPower !== undefined ||
+                        watchedValues.tss !== undefined ||
+                        watchedValues.avgHeartRate !== undefined
+                      }
+                    >
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
@@ -671,12 +761,21 @@ export default function Home() {
                           )}
                         />
                       </div>
-                    </div>
+                    </CollapsibleSection>
 
                     {/* Recovery Metrics Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-md font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600 pb-2">Recovery Metrics</h3>
-                      
+                    <CollapsibleSection
+                      id="recovery-metrics"
+                      title="Recovery Metrics"
+                      isOpen={sectionStates["recovery-metrics"]}
+                      onOpenChange={() => toggleSection("recovery-metrics")}
+                      hasData={
+                        !!watchedValues.hrv ||
+                        watchedValues.rMSSD !== undefined ||
+                        watchedValues.rhr !== undefined ||
+                        (!!watchedValues.trainerRoadLgt && watchedValues.trainerRoadLgt !== "G")
+                      }
+                    >
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
@@ -772,12 +871,21 @@ export default function Home() {
                           )}
                         />
                       </div>
-                    </div>
+                    </CollapsibleSection>
 
                     {/* Reflection Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-md font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600 pb-2">Workout Reflection</h3>
-                      
+                    <CollapsibleSection
+                      id="reflection"
+                      title="Workout Reflection"
+                      isOpen={sectionStates["reflection"]}
+                      onOpenChange={() => toggleSection("reflection")}
+                      hasData={
+                        !!watchedValues.whatWentWell ||
+                        !!watchedValues.whatCouldBeImproved ||
+                        !!watchedValues.description
+                      }
+                    >
+
                       <FormField
                         control={form.control}
                         name="whatWentWell"
@@ -836,7 +944,7 @@ export default function Home() {
                           </FormItem>
                         )}
                       />
-                    </div>
+                    </CollapsibleSection>
 
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
