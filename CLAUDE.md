@@ -64,6 +64,8 @@ scripts/                              # AWS S3 deployment automation
 - `client/src/pages/home.tsx` - Main form component with markdown generation
 - `shared/schema-static.ts` - Zod schema defining workout data structure
 - `client/src/hooks/use-form-persistence.ts` - Debounced form draft auto-save/restore
+- `client/src/hooks/use-section-state.ts` - Persisted open/closed state for collapsible form sections
+- `client/src/components/ui/collapsible-section.tsx` - Reusable `<details>`-based collapsible section component
 
 ### PWA Setup
 - `vite-plugin-pwa` generates the service worker (Workbox) and injects manifest link automatically
@@ -78,6 +80,16 @@ scripts/                              # AWS S3 deployment automation
 - Corrupt/unparseable drafts are silently discarded (`console.error` logged)
 - `QuotaExceededError` on write is caught; form still works without persistence
 - `clearDraft()` removes the localStorage key and resets `wasRestored`
+
+### Section State Persistence
+- `useSectionState({ key, defaults })` manages open/closed state for each form section
+- localStorage key: `"pedalnotes-sections"`; stored as `{ version: 1, data: Record<SectionId, boolean> }`
+- On mount: reads stored state, merges defaults for any missing keys, drops unknown keys
+- Version mismatch or malformed data falls back to defaults and overwrites stored value
+- Default expansion: Core Metrics=open, Reflection=open; Fueling/Performance/Recovery=collapsed
+- `toggleSection(id)`, `setSection(id, open)`, `resetSections()` — writes persist immediately (no debounce)
+- `QuotaExceededError` on write is caught; section states still work in memory
+- Section states are independent from form draft; clearing the form does not reset section states
 
 ### Data Flow
 1. User fills form → React Hook Form manages state
