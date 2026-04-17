@@ -174,16 +174,8 @@ describe("useSectionState", () => {
 
   it("catches QuotaExceededError on write without crashing", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const originalSetItem = localStorage.setItem.bind(localStorage);
-    let callCount = 0;
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation((key, value) => {
-      callCount++;
-      if (callCount > 1) {
-        // First call is from init (reading), subsequent writes throw quota error
-        const err = new DOMException("QuotaExceededError", "QuotaExceededError");
-        throw err;
-      }
-      originalSetItem(key, value);
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("QuotaExceededError", "QuotaExceededError");
     });
 
     const { result } = renderHookWithDefaults();

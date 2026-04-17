@@ -422,7 +422,7 @@ export default function Home() {
                       id="core-metrics"
                       title="Core Metrics"
                       isOpen={sectionStates["core-metrics"]}
-                      onOpenChange={() => toggleSection("core-metrics")}
+                      onOpenChange={(open) => setSection("core-metrics", open)}
                       hasData={
                         !!watchedValues.goal ||
                         watchedValues.rpe !== 1 ||
@@ -619,7 +619,7 @@ export default function Home() {
                       title="Fueling"
                       icon={<Utensils className="w-4 h-4 text-orange-500" />}
                       isOpen={sectionStates["fueling"]}
-                      onOpenChange={() => toggleSection("fueling")}
+                      onOpenChange={(open) => setSection("fueling", open)}
                       hasData={
                         !!watchedValues.choIntakePre ||
                         !!watchedValues.choIntake ||
@@ -683,7 +683,7 @@ export default function Home() {
                       id="performance-metrics"
                       title="Performance Metrics"
                       isOpen={sectionStates["performance-metrics"]}
-                      onOpenChange={() => toggleSection("performance-metrics")}
+                      onOpenChange={(open) => setSection("performance-metrics", open)}
                       hasData={
                         watchedValues.normalizedPower !== undefined ||
                         watchedValues.tss !== undefined ||
@@ -768,7 +768,7 @@ export default function Home() {
                       id="recovery-metrics"
                       title="Recovery Metrics"
                       isOpen={sectionStates["recovery-metrics"]}
-                      onOpenChange={() => toggleSection("recovery-metrics")}
+                      onOpenChange={(open) => setSection("recovery-metrics", open)}
                       hasData={
                         !!watchedValues.hrv ||
                         watchedValues.rMSSD !== undefined ||
@@ -878,7 +878,7 @@ export default function Home() {
                       id="reflection"
                       title="Workout Reflection"
                       isOpen={sectionStates["reflection"]}
-                      onOpenChange={() => toggleSection("reflection")}
+                      onOpenChange={(open) => setSection("reflection", open)}
                       hasData={
                         !!watchedValues.whatWentWell ||
                         !!watchedValues.whatCouldBeImproved ||
