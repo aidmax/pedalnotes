@@ -30,7 +30,6 @@ import {
   Smile,
   Calendar,
   Info,
-  Utensils,
   Sun,
   Moon,
   RotateCcw
@@ -617,7 +616,6 @@ export default function Home() {
                     <CollapsibleSection
                       id="fueling"
                       title="Fueling"
-                      icon={<Utensils className="w-4 h-4 text-orange-500" />}
                       isOpen={sectionStates["fueling"]}
                       onOpenChange={(open) => setSection("fueling", open)}
                       hasData={
