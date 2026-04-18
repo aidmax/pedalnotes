@@ -12,7 +12,7 @@ const EIGHT_HOURS_MS = 8 * ONE_HOUR_MS;
 const defaultValues: InsertWorkout = {
   workoutDate: "2026-01-01",
   goal: "",
-  rpe: 1,
+  rpe: 5,
   feel: "N",
   choIntakePre: "",
   choIntake: "",
