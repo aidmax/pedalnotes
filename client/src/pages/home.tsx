@@ -102,7 +102,7 @@ function getDefaultWorkoutValues(): InsertWorkout {
   return {
     workoutDate: new Date().toISOString().split('T')[0],
     goal: "",
-    rpe: 1,
+    rpe: 5,
     feel: "N",
     choIntakePre: "",
     choIntake: "",
@@ -424,7 +424,7 @@ export default function Home() {
                       onOpenChange={(open) => setSection("core-metrics", open)}
                       hasData={
                         !!watchedValues.goal ||
-                        watchedValues.rpe !== 1 ||
+                        watchedValues.rpe !== 5 ||
                         watchedValues.feel !== "N" ||
                         watchedValues.trainerRoadRpe !== undefined
                       }
