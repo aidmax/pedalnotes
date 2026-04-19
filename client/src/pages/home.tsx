@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertWorkoutSchema, type InsertWorkout } from "@shared/schema-static";
@@ -244,7 +244,10 @@ export default function Home() {
     defaults: SECTION_DEFAULTS,
   });
 
-  const isQuickMode = new URLSearchParams(window.location.search).get('quick') === '1';
+  const isQuickMode = useMemo(
+    () => new URLSearchParams(window.location.search).get('quick') === '1',
+    []
+  );
 
   const watchedValues = form.watch();
 
