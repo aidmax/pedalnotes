@@ -244,6 +244,8 @@ export default function Home() {
     defaults: SECTION_DEFAULTS,
   });
 
+  const isQuickMode = new URLSearchParams(window.location.search).get('quick') === '1';
+
   const watchedValues = form.watch();
 
   const { isDirty } = form.formState;
@@ -267,8 +269,8 @@ export default function Home() {
   }
 
   useEffect(() => {
-    setMarkdownOutput((isDirty || wasRestored) ? generateMarkdown(watchedValues) : "");
-  }, [watchedValues, isDirty, wasRestored]);
+    setMarkdownOutput((isDirty || wasRestored || isQuickMode) ? generateMarkdown(watchedValues) : "");
+  }, [watchedValues, isDirty, wasRestored, isQuickMode]);
 
   useEffect(() => {
     if (wasRestored) {
@@ -280,8 +282,10 @@ export default function Home() {
   }, [wasRestored]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCopyToClipboard = async () => {
-    await form.trigger();
-    autoExpandErrorSections();
+    if (!isQuickMode) {
+      await form.trigger();
+      autoExpandErrorSections();
+    }
     const exportMarkdown = generateMarkdown(form.getValues());
     try {
       // Try modern clipboard API first
@@ -327,8 +331,10 @@ export default function Home() {
   };
 
   const handleDownload = async () => {
-    await form.trigger();
-    autoExpandErrorSections();
+    if (!isQuickMode) {
+      await form.trigger();
+      autoExpandErrorSections();
+    }
     const exportMarkdown = generateMarkdown(form.getValues());
     const blob = new Blob([exportMarkdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
@@ -345,6 +351,214 @@ export default function Home() {
       description: "Your markdown file is being downloaded."
     });
   };
+
+  if (isQuickMode) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-brand-blue rounded-lg flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">PedalNotes</h1>
+                <span className="hidden sm:inline text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-2 py-0.5 rounded-full">Quick Entry</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <a
+                  href={window.location.pathname}
+                  className="text-sm text-blue-500 hover:underline"
+                >
+                  Full form
+                </a>
+                <button
+                  onClick={toggleTheme}
+                  aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                  className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+                >
+                  {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+          <Card className="shadow-sm dark:bg-gray-800 dark:border-gray-700">
+            <CardContent className="p-4 sm:p-6">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Quick Entry</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Log the essentials now — open the{" "}
+                  <a href={window.location.pathname} className="text-blue-500 hover:underline">full form</a>
+                  {" "}to add more details later.
+                </p>
+              </div>
+
+              <Form {...form}>
+                <form className="space-y-6">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <FormField
+                      control={form.control}
+                      name="workoutDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            Workout Date
+                          </FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="rpe"
+                    render={({ field }) => {
+                      const rpeDescriptions: { [key: number]: string } = {
+                        1: 'Nothing at all', 2: 'Very easy', 3: 'Easy', 4: 'Comfortable',
+                        5: 'Slightly challenging', 6: 'Difficult', 7: 'Hard',
+                        8: 'Very hard', 9: 'Extremely hard', 10: 'Max effort'
+                      };
+                      return (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-orange-500" />
+                            R (RPE): {field.value}/10
+                          </FormLabel>
+                          <FormControl>
+                            <div className="px-2 py-4">
+                              <Slider
+                                value={[field.value]}
+                                onValueChange={(value) => field.onChange(value[0])}
+                                max={10} min={1} step={1} className="w-full"
+                              />
+                              <div className="flex justify-between text-xs text-gray-500 mt-2">
+                                <span>1 - Nothing at all</span>
+                                {field.value >= 2 && field.value <= 9 && <span>{rpeDescriptions[field.value]}</span>}
+                                <span>10 - Max effort</span>
+                              </div>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="feel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Smile className="w-4 h-4 text-green-500" />
+                          F (Feel): {feelOptions.find(opt => opt.value === field.value)?.label || 'Normal (N)'}
+                        </FormLabel>
+                        <FormControl>
+                          <div className="px-2 py-4">
+                            <Slider
+                              value={[feelOptions.findIndex(opt => opt.value === field.value) + 1]}
+                              onValueChange={(value) => field.onChange(feelOptions[value[0] - 1]?.value || 'N')}
+                              max={5} min={1} step={1} className="w-full"
+                            />
+                            <div className="flex justify-between text-xs text-gray-500 mt-2">
+                              <span>Weak</span><span>Poor</span><span>Normal</span><span>Good</span><span>Strong</span>
+                            </div>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="whatWentWell"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>WWW (What Went Well)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            rows={4}
+                            placeholder="• Enter each point on a new line&#10;• Focus on positive aspects of the workout"
+                            className="resize-y"
+                            {...field}
+                          />
+                        </FormControl>
+                        <p className="text-xs text-gray-500">Each line will be formatted as a bullet point</p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="whatCouldBeImproved"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>WCBI (What Could Be Improved)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            rows={4}
+                            placeholder="• Enter each improvement area on a new line&#10;• Be specific about what could be better"
+                            className="resize-y"
+                            {...field}
+                          />
+                        </FormControl>
+                        <p className="text-xs text-gray-500">Each line will be formatted as a bullet point</p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
+                    <Button type="button" className="flex-1 bg-brand-blue hover:bg-blue-700 text-white" onClick={handleCopyToClipboard}>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy to Clipboard
+                    </Button>
+                    <Button type="button" className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white" onClick={handleDownload}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                    <Button type="button" variant="outline" className="sm:flex-none" onClick={handleClearForm}>
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Clear
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          {markdownOutput && (
+            <Card className="shadow-sm dark:bg-gray-800 dark:border-gray-700">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Preview</h2>
+                  <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <span>Live</span>
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 max-h-56 overflow-y-auto">
+                  <pre className="whitespace-pre-wrap text-sm font-mono text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {markdownOutput}
+                  </pre>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
