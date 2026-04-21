@@ -40,13 +40,18 @@ export function useFormPersistence<T extends FieldValues>(
           localStorage.removeItem(key);
           return;
         }
-        const draft = parsed as PersistedDraft<T>;
+        const draft = parsed as PersistedDraft<Record<string, unknown>>;
         const age = Date.now() - draft.savedAt;
         if (age > maxAgeMs) {
           localStorage.removeItem(key);
           return;
         }
-        form.reset(draft.data);
+        // Backward-compat: drafts saved before entry types had no entryType field
+        const restoredData = { ...draft.data };
+        if (!restoredData.entryType) {
+          restoredData.entryType = "cycling";
+        }
+        form.reset(restoredData as T);
         setWasRestored(true);
       }
     } catch (err) {
