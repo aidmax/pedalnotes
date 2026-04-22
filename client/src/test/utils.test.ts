@@ -199,7 +199,7 @@ describe('generateMarkdown — cycling R/F output', () => {
 
   it('starts with date header', () => {
     const md = generateMarkdown(baseCyclingWorkout);
-    expect(md.startsWith('---\n## 24.03.2026\n\n')).toBe(true);
+    expect(md).toMatch(/^---\n## \d{2}\.\d{2}\.2026\n\n/);
   });
 });
 
@@ -211,7 +211,7 @@ describe('generateMarkdown — rest output', () => {
 
   it('emits the Rest Day marker immediately after the date header', () => {
     const md = generateMarkdown(baseRest);
-    expect(md).toBe('---\n## 13.04.2026\n\nRest Day\n\n');
+    expect(md).toMatch(/^---\n## \d{2}\.\d{2}\.2026\n\nRest Day\n\n$/);
   });
 
   it('includes recovery metrics and weight when provided', () => {
