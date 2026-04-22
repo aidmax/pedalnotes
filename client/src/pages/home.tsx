@@ -664,7 +664,7 @@ export default function Home() {
               <CardContent className="p-4 sm:p-6">
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Workout Details</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Details</h2>
                     <button
                       type="button"
                       onClick={expandAllOrCollapseAll}
