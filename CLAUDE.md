@@ -86,10 +86,22 @@ scripts/                              # AWS S3 deployment automation
 - localStorage key: `"pedalnotes-sections"`; stored as `{ version: 1, data: Record<SectionId, boolean> }`
 - On mount: reads stored state, merges defaults for any missing keys, drops unknown keys
 - Version mismatch or malformed data falls back to defaults and overwrites stored value
-- Default expansion: Core Metrics=open, Reflection=open; Fueling/Performance/Recovery=collapsed
+- Default expansion: Core Metrics=open, Reflection=open, Rest Day=open, Activity=open; Fueling/Performance/Recovery=collapsed
 - `toggleSection(id)`, `setSection(id, open)`, `resetSections()` — writes persist immediately (no debounce)
 - `QuotaExceededError` on write is caught; section states still work in memory
 - Section states are independent from form draft; clearing the form does not reset section states
+- Section IDs: `core-metrics`, `fueling`, `performance-metrics`, `recovery-metrics`, `reflection`, `rest-day`, `activity`
+- Visible sections depend on `entryType` — `expandAllOrCollapseAll` only affects currently visible sections
+
+### Entry Types
+Three entry types supported via `entryType` field (default: `cycling`):
+- **`cycling`** — full cycling workout form (Core Metrics, Fueling, Performance, Recovery, Reflection)
+- **`rest`** — rest day logging (Recovery Metrics + Rest Day sections only); auto-expands Recovery Metrics on switch
+- **`other`** — non-cycling activities like MFR/yoga/strength (Activity section only)
+
+`goal`, `rpe`, `feel` are only required when `entryType === "cycling"` (enforced by `superRefine`). Switching entry types does not reset other fields — hidden fields retain their values but don't appear in markdown output.
+
+Old drafts (pre-entryType) are migrated to `cycling` on restore in `use-form-persistence.ts`.
 
 ### Data Flow
 1. User fills form → React Hook Form manages state
@@ -104,11 +116,19 @@ scripts/                              # AWS S3 deployment automation
 - `@shared/` → `shared/`
 
 ### Workout Schema Fields
-Required: `workoutDate`, `goal`, `rpe` (1-10), `feel` (W/P/N/G/S)
-Optional: `choIntakePre`, `choIntake`, `choIntakePost`, `normalizedPower`, `tss`, `avgHeartRate`, `hrv`, `rMSSD`, `rhr`, `trainerRoadRpe`, `trainerRoadLgt`, `whatWentWell`, `whatCouldBeImproved`, `description`
+Always required: `entryType` (`cycling`/`rest`/`other`), `workoutDate`
+Cycling-required (via `superRefine`): `goal`, `rpe` (1-10), `feel` (W/P/N/G/S)
+Cycling-optional: `choIntakePre`, `choIntake`, `choIntakePost`, `normalizedPower`, `tss`, `avgHeartRate`, `hrv`, `rMSSD`, `rhr`, `trainerRoadRpe`, `trainerRoadLgt`, `whatWentWell`, `whatCouldBeImproved`, `description`
+Rest-only: `weight` (positive number, kg), `restNotes` (free-form, rendered as bullets). Rest entries also reuse `hrv`/`rMSSD`/`rhr`/`trainerRoadLgt`.
+Other-only: `activityGoal` (e.g. "MFR", "Yoga"), `activityNotes` (free-form, rendered as bullets).
 
 ### Markdown Abbreviations
-G=Goal, R=RPE, F=Feel, Ci-Pre=Carbohydrate Intake Pre-Workout, Ci=Carbohydrate Intake During Ride, Ci-Post=Carbohydrate Intake Post-Workout, NP=Normalized Power, TSS=Training Stress Score, Hr=Heart Rate, HRV=Heart Rate Variability, RHR=Resting Heart Rate, TR-RPE=TrainerRoad RPE, TR-LGT=TrainerRoad Light
+G=Goal (cycling) or Activity (other), R=RPE, F=Feel, Ci-Pre=Carbohydrate Intake Pre-Workout, Ci=Carbohydrate Intake During Ride, Ci-Post=Carbohydrate Intake Post-Workout, NP=Normalized Power, TSS=Training Stress Score, Hr=Heart Rate, HRV=Heart Rate Variability, rMSSD=HRV Recovery Metric, RHR=Resting Heart Rate, TR-RPE=TrainerRoad RPE, TR-LGT=TrainerRoad Light, W=Weight (rest)
+
+### Markdown Output Per Entry Type
+- **cycling**: `G` / `R` / `F` + optional metrics + WWW/WCBI/Planned blocks (current format, unchanged)
+- **rest**: `Rest Day` marker + present-only recovery metrics and `W` + bulleted `restNotes`
+- **other**: optional `G: <activity>` + bulleted `activityNotes`; no metrics
 
 ## Environment Variables (Deployment Only)
 ```

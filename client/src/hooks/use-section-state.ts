@@ -5,7 +5,9 @@ export type SectionId =
   | "fueling"
   | "performance-metrics"
   | "recovery-metrics"
-  | "reflection";
+  | "reflection"
+  | "rest-day"
+  | "activity";
 
 const ALL_SECTION_IDS: SectionId[] = [
   "core-metrics",
@@ -13,6 +15,8 @@ const ALL_SECTION_IDS: SectionId[] = [
   "performance-metrics",
   "recovery-metrics",
   "reflection",
+  "rest-day",
+  "activity",
 ];
 
 interface PersistedSectionState {

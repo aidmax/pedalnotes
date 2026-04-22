@@ -46,6 +46,10 @@ export function useFormPersistence<T extends FieldValues>(
           localStorage.removeItem(key);
           return;
         }
+        const data = draft.data as Record<string, unknown>;
+        if (data && typeof data === "object" && !data.entryType) {
+          data.entryType = "cycling";
+        }
         form.reset(draft.data);
         setWasRestored(true);
       }

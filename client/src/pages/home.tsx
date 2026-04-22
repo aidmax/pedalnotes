@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertWorkoutSchema, type InsertWorkout } from "@shared/schema-static";
+import { insertWorkoutSchema, type InsertWorkout, type EntryType } from "@shared/schema-static";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,7 +32,13 @@ import {
   Info,
   Sun,
   Moon,
-  RotateCcw
+  RotateCcw,
+  Bike,
+  BedDouble,
+  Dumbbell,
+  ClipboardList,
+  Scale,
+  NotebookPen
 } from "lucide-react";
 
 const SECTION_DEFAULTS: Record<SectionId, boolean> = {
@@ -41,6 +47,8 @@ const SECTION_DEFAULTS: Record<SectionId, boolean> = {
   "performance-metrics": false,
   "recovery-metrics": false,
   "reflection": true,
+  "rest-day": true,
+  "activity": true,
 };
 
 const FIELD_TO_SECTION: Partial<Record<keyof InsertWorkout, SectionId>> = {
@@ -61,6 +69,28 @@ const FIELD_TO_SECTION: Partial<Record<keyof InsertWorkout, SectionId>> = {
   whatWentWell: "reflection",
   whatCouldBeImproved: "reflection",
   description: "reflection",
+  weight: "rest-day",
+  restNotes: "rest-day",
+  activityGoal: "activity",
+  activityNotes: "activity",
+};
+
+const entryTypeOptions = [
+  { value: "cycling" as const, label: "Cycling", icon: Bike },
+  { value: "rest" as const, label: "Rest", icon: BedDouble },
+  { value: "other" as const, label: "Other", icon: Dumbbell },
+];
+
+const entryTypeSubtitles: Record<EntryType, string> = {
+  cycling: "Fill in your cycling workout information to generate a structured markdown report.",
+  rest: "Log your rest day — wellness metrics and how you're feeling.",
+  other: "Log your activity — stretching, yoga, strength, mobility, or anything else.",
+};
+
+const VISIBLE_SECTIONS_BY_TYPE: Record<EntryType, SectionId[]> = {
+  cycling: ["core-metrics", "fueling", "performance-metrics", "recovery-metrics", "reflection"],
+  rest: ["recovery-metrics", "rest-day"],
+  other: ["activity"],
 };
 
 const rpeOptions = [
@@ -100,6 +130,7 @@ const lgtOptions = [
 
 function getDefaultWorkoutValues(): InsertWorkout {
   return {
+    entryType: "cycling",
     workoutDate: new Date().toISOString().split('T')[0],
     goal: "",
     rpe: 5,
@@ -117,7 +148,11 @@ function getDefaultWorkoutValues(): InsertWorkout {
     trainerRoadLgt: undefined,
     whatWentWell: "",
     whatCouldBeImproved: "",
-    description: ""
+    description: "",
+    weight: undefined,
+    restNotes: "",
+    activityGoal: "",
+    activityNotes: "",
   };
 }
 
@@ -147,81 +182,101 @@ function formatBulletPoints(text: string): string {
     .join("\n");
 }
 
-function generateMarkdown(data: InsertWorkout): string {
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}.${month}.${year}`;
-  };
+function formatWorkoutDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}.${month}.${year}`;
+}
 
-  let markdown = `---\n## ${formatDate(data.workoutDate)}\n\n`;
+function generateCyclingMarkdown(data: InsertWorkout): string {
+  let markdown = "";
 
   if (data.goal) markdown += `G: ${data.goal}\n`;
   markdown += `R: ${data.rpe}\n`;
   markdown += `F: ${data.feel}\n`;
-  
-  if (data.choIntakePre) {
-    markdown += `Ci-Pre: ${data.choIntakePre}\n`;
-  }
 
-  if (data.choIntake) {
-    markdown += `Ci: ${data.choIntake}\n`;
-  }
-
-  if (data.choIntakePost) {
-    markdown += `Ci-Post: ${data.choIntakePost}\n`;
-  }
-  
-  if (data.normalizedPower) {
-    markdown += `NP: ${data.normalizedPower}\n`;
-  }
-
-  if (data.tss) {
-    markdown += `TSS: ${data.tss}\n`;  }
-  
-  if (data.avgHeartRate) {
-    markdown += `Hr: ${data.avgHeartRate}\n`;
-  }
-  
-  if (data.trainerRoadRpe) {
-    markdown += `TR-RPE: ${data.trainerRoadRpe}\n`;
-  }
-  
-  if (data.hrv) {
-    markdown += `HRV: ${data.hrv}\n`;
-  }
-  
-  if (data.rMSSD) {
-    markdown += `rMSSD: ${data.rMSSD}\n`;
-  }
-
-  if (data.rhr) {
-    markdown += `RHR: ${data.rhr}\n`;
-  }
-
+  if (data.choIntakePre) markdown += `Ci-Pre: ${data.choIntakePre}\n`;
+  if (data.choIntake) markdown += `Ci: ${data.choIntake}\n`;
+  if (data.choIntakePost) markdown += `Ci-Post: ${data.choIntakePost}\n`;
+  if (data.normalizedPower) markdown += `NP: ${data.normalizedPower}\n`;
+  if (data.tss) markdown += `TSS: ${data.tss}\n`;
+  if (data.avgHeartRate) markdown += `Hr: ${data.avgHeartRate}\n`;
+  if (data.trainerRoadRpe) markdown += `TR-RPE: ${data.trainerRoadRpe}\n`;
+  if (data.hrv) markdown += `HRV: ${data.hrv}\n`;
+  if (data.rMSSD) markdown += `rMSSD: ${data.rMSSD}\n`;
+  if (data.rhr) markdown += `RHR: ${data.rhr}\n`;
   if (data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
     markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
   }
-  
+
   markdown += '\n';
-  
+
   if (data.whatWentWell) {
     markdown += 'WWW\n';
     markdown += formatBulletPoints(data.whatWentWell) + '\n\n';
   }
-  
+
   if (data.whatCouldBeImproved) {
     markdown += 'WCBI\n';
     markdown += formatBulletPoints(data.whatCouldBeImproved) + '\n';
   }
-  
+
   if (data.description) {
     markdown += '\nPlanned\n';
     markdown += data.description + '\n';
   }
-  
+
+  return markdown;
+}
+
+function generateRestMarkdown(data: InsertWorkout): string {
+  let markdown = "Rest Day\n\n";
+
+  if (data.hrv) markdown += `HRV: ${data.hrv}\n`;
+  if (data.rMSSD) markdown += `rMSSD: ${data.rMSSD}\n`;
+  if (data.rhr) markdown += `RHR: ${data.rhr}\n`;
+  if (data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
+    markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
+  }
+  if (data.weight) markdown += `W: ${data.weight}\n`;
+
+  if (data.restNotes) {
+    markdown += '\n' + formatBulletPoints(data.restNotes) + '\n';
+  }
+
+  return markdown;
+}
+
+function generateOtherMarkdown(data: InsertWorkout): string {
+  let markdown = "";
+
+  if (data.activityGoal) markdown += `G: ${data.activityGoal}\n`;
+
+  if (data.activityNotes) {
+    markdown += '\n' + formatBulletPoints(data.activityNotes) + '\n';
+  }
+
+  return markdown;
+}
+
+function generateMarkdown(data: InsertWorkout): string {
+  let markdown = `---\n## ${formatWorkoutDate(data.workoutDate)}\n\n`;
+
+  switch (data.entryType) {
+    case "rest":
+      markdown += generateRestMarkdown(data);
+      break;
+    case "other":
+      markdown += generateOtherMarkdown(data);
+      break;
+    case "cycling":
+    default:
+      markdown += generateCyclingMarkdown(data);
+      break;
+  }
+
   return markdown;
 }
 
@@ -250,17 +305,27 @@ export default function Home() {
   );
 
   const watchedValues = form.watch();
+  const entryType: EntryType = watchedValues.entryType ?? "cycling";
 
   const { isDirty } = form.formState;
 
-  const allExpanded = Object.values(sectionStates).every(Boolean);
+  const visibleSectionIds = VISIBLE_SECTIONS_BY_TYPE[entryType];
+  const allExpanded = visibleSectionIds.every((id) => sectionStates[id]);
 
   function expandAllOrCollapseAll() {
     const target = !allExpanded;
-    (["core-metrics", "fueling", "performance-metrics", "recovery-metrics", "reflection"] as SectionId[]).forEach(
-      (id) => setSection(id, target)
-    );
+    visibleSectionIds.forEach((id) => setSection(id, target));
   }
+
+  const prevEntryTypeRef = useRef<EntryType>(entryType);
+  useEffect(() => {
+    const prev = prevEntryTypeRef.current;
+    if (prev !== entryType && entryType === "rest") {
+      setSection("recovery-metrics", true);
+    }
+    prevEntryTypeRef.current = entryType;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entryType]);
 
   function autoExpandErrorSections() {
     const errors = form.formState.errors;
@@ -433,18 +498,18 @@ export default function Home() {
                         <FormItem>
                           <FormLabel className="flex items-center gap-2">
                             <Activity className="w-4 h-4 text-orange-500" />
-                            R (RPE): {field.value}/10
+                            R (RPE): {field.value ?? 5}/10
                           </FormLabel>
                           <FormControl>
                             <div className="px-2 py-4">
                               <Slider
-                                value={[field.value]}
+                                value={[field.value ?? 5]}
                                 onValueChange={(value) => field.onChange(value[0])}
                                 max={10} min={1} step={1} className="w-full"
                               />
                               <div className="flex justify-between text-xs text-gray-500 mt-2">
                                 <span>1 - Nothing at all</span>
-                                {field.value >= 2 && field.value <= 9 && <span>{rpeDescriptions[field.value]}</span>}
+                                {field.value !== undefined && field.value >= 2 && field.value <= 9 && <span>{rpeDescriptions[field.value]}</span>}
                                 <span>10 - Max effort</span>
                               </div>
                             </div>
@@ -608,7 +673,7 @@ export default function Home() {
                       {allExpanded ? "Collapse all" : "Expand all"}
                     </button>
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Fill in your cycling workout information to generate a structured markdown report.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{entryTypeSubtitles[entryType]}</p>
                 </div>
 
                 <Form {...form}>
@@ -633,7 +698,34 @@ export default function Home() {
                       />
                     </div>
 
-                    {/* Core Metrics Section */}
+                    {/* Entry Type Selector */}
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white mb-3">
+                        <ClipboardList className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        Entry Type
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {entryTypeOptions.map((option) => {
+                          const Icon = option.icon;
+                          const isActive = entryType === option.value;
+                          return (
+                            <Button
+                              key={option.value}
+                              type="button"
+                              variant={isActive ? "default" : "outline"}
+                              className={isActive ? "bg-brand-blue hover:bg-blue-700 text-white" : ""}
+                              onClick={() => form.setValue("entryType", option.value, { shouldDirty: true })}
+                            >
+                              <Icon className="w-4 h-4 mr-1.5" />
+                              {option.label}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Core Metrics Section — Cycling only */}
+                    {entryType === "cycling" && (
                     <CollapsibleSection
                       id="core-metrics"
                       title="Core Metrics"
@@ -684,12 +776,12 @@ export default function Home() {
                             <FormItem>
                               <FormLabel className="flex items-center gap-2">
                                 <Activity className="w-4 h-4 text-orange-500" />
-                                R (RPE - Rate of Perceived Exertion): {field.value}/10
+                                R (RPE - Rate of Perceived Exertion): {field.value ?? 5}/10
                               </FormLabel>
                               <FormControl>
                                 <div className="px-2 py-4">
                                   <Slider
-                                    value={[field.value]}
+                                    value={[field.value ?? 5]}
                                     onValueChange={(value) => field.onChange(value[0])}
                                     max={10}
                                     min={1}
@@ -698,7 +790,7 @@ export default function Home() {
                                   />
                                   <div className="flex justify-between text-xs text-gray-500 mt-2">
                                     <span>1 - Nothing at all</span>
-                                    {field.value >= 2 && field.value <= 9 && (
+                                    {field.value !== undefined && field.value >= 2 && field.value <= 9 && (
                                       <span>
                                         {rpeDescriptions[field.value]}
                                       </span>
@@ -828,8 +920,10 @@ export default function Home() {
                       />
 
                     </CollapsibleSection>
+                    )}
 
-                    {/* Fueling Section */}
+                    {/* Fueling Section — Cycling only */}
+                    {entryType === "cycling" && (
                     <CollapsibleSection
                       id="fueling"
                       title="Fueling"
@@ -892,8 +986,10 @@ export default function Home() {
                         )}
                       />
                     </CollapsibleSection>
+                    )}
 
-                    {/* Performance Metrics Section */}
+                    {/* Performance Metrics Section — Cycling only */}
+                    {entryType === "cycling" && (
                     <CollapsibleSection
                       id="performance-metrics"
                       title="Performance Metrics"
@@ -977,8 +1073,10 @@ export default function Home() {
                         />
                       </div>
                     </CollapsibleSection>
+                    )}
 
-                    {/* Recovery Metrics Section */}
+                    {/* Recovery Metrics Section — Cycling + Rest */}
+                    {(entryType === "cycling" || entryType === "rest") && (
                     <CollapsibleSection
                       id="recovery-metrics"
                       title="Recovery Metrics"
@@ -1087,8 +1185,10 @@ export default function Home() {
                         />
                       </div>
                     </CollapsibleSection>
+                    )}
 
-                    {/* Reflection Section */}
+                    {/* Reflection Section — Cycling only */}
+                    {entryType === "cycling" && (
                     <CollapsibleSection
                       id="reflection"
                       title="Workout Reflection"
@@ -1160,6 +1260,126 @@ export default function Home() {
                         )}
                       />
                     </CollapsibleSection>
+                    )}
+
+                    {/* Rest Day Section — Rest only */}
+                    {entryType === "rest" && (
+                    <CollapsibleSection
+                      id="rest-day"
+                      title="Rest Day"
+                      isOpen={sectionStates["rest-day"]}
+                      onOpenChange={(open) => setSection("rest-day", open)}
+                      hasData={
+                        watchedValues.weight !== undefined || !!watchedValues.restNotes
+                      }
+                    >
+                      <FormField
+                        control={form.control}
+                        name="weight"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Scale className="w-4 h-4 text-purple-500" />
+                              W (Weight)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder="kg"
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="restNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <NotebookPen className="w-4 h-4 text-blue-500" />
+                              Notes
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                rows={6}
+                                placeholder="How are you feeling? Life context, decisions, mood..."
+                                className="resize-y"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <p className="text-xs text-gray-500">Each line will be formatted as a bullet point</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CollapsibleSection>
+                    )}
+
+                    {/* Activity Section — Other only */}
+                    {entryType === "other" && (
+                    <CollapsibleSection
+                      id="activity"
+                      title="Activity"
+                      isOpen={sectionStates["activity"]}
+                      onOpenChange={(open) => setSection("activity", open)}
+                      hasData={
+                        !!watchedValues.activityGoal || !!watchedValues.activityNotes
+                      }
+                    >
+                      <FormField
+                        control={form.control}
+                        name="activityGoal"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Target className="w-4 h-4 text-blue-500" />
+                              Activity
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., MFR, Yoga, Strength, Stretching"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="activityNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <NotebookPen className="w-4 h-4 text-blue-500" />
+                              Notes
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                rows={6}
+                                placeholder="What did you do? Duration, areas worked, how it felt..."
+                                className="resize-y"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <p className="text-xs text-gray-500">Each line will be formatted as a bullet point</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CollapsibleSection>
+                    )}
 
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
