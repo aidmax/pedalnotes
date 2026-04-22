@@ -123,11 +123,11 @@ Rest-only: `weight` (positive number, kg), `restNotes` (free-form, rendered as b
 Other-only: `activityGoal` (e.g. "MFR", "Yoga"), `activityNotes` (free-form, rendered as bullets).
 
 ### Markdown Abbreviations
-G=Goal (cycling) or Activity (other), R=RPE, F=Feel, Ci-Pre=Carbohydrate Intake Pre-Workout, Ci=Carbohydrate Intake During Ride, Ci-Post=Carbohydrate Intake Post-Workout, NP=Normalized Power, TSS=Training Stress Score, Hr=Heart Rate, HRV=Heart Rate Variability, rMSSD=HRV Recovery Metric, RHR=Resting Heart Rate, TR-RPE=TrainerRoad RPE, TR-LGT=TrainerRoad Light, W=Weight (rest)
+G=Goal (cycling) or Activity (other), R=RPE, F=Feel, Ci-Pre=Carbohydrate Intake Pre-Workout, Ci=Carbohydrate Intake During Ride, Ci-Post=Carbohydrate Intake Post-Workout, NP=Normalized Power, TSS=Training Stress Score, Hr=Heart Rate, HRV=Heart Rate Variability, rMSSD=HRV Recovery Metric, RHR=Resting Heart Rate, TR-RPE=TrainerRoad RPE, TR-LGT=TrainerRoad Light, Weight (rest — written out in full)
 
 ### Markdown Output Per Entry Type
 - **cycling**: `G` / `R` / `F` + optional metrics + WWW/WCBI/Planned blocks (current format, unchanged)
-- **rest**: `Rest Day` marker + present-only recovery metrics and `W` + bulleted `restNotes`
+- **rest**: `Rest Day` marker + present-only recovery metrics and `Weight` + bulleted `restNotes`
 - **other**: optional `G: <activity>` + bulleted `activityNotes`; no metrics
 
 ## Environment Variables (Deployment Only)

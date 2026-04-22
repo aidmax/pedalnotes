@@ -131,7 +131,7 @@ function generateRestMarkdown(data: InsertWorkout): string {
   if (data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
     markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
   }
-  if (data.weight) markdown += `W: ${data.weight}\n`;
+  if (data.weight) markdown += `Weight: ${data.weight}\n`;
 
   if (data.restNotes) {
     markdown += '\n' + formatBulletPoints(data.restNotes) + '\n';
@@ -227,7 +227,7 @@ describe('generateMarkdown — rest output', () => {
     expect(md).toContain('rMSSD: 30');
     expect(md).toContain('RHR: 63');
     expect(md).toContain('TR-LGT: Y');
-    expect(md).toContain('W: 82.5');
+    expect(md).toContain('Weight: 82.5');
   });
 
   it('omits TR-LGT when Green (default)', () => {
@@ -271,7 +271,7 @@ describe('generateMarkdown — rest output', () => {
     expect(md).not.toContain('HRV:');
     expect(md).not.toContain('rMSSD:');
     expect(md).not.toContain('RHR:');
-    expect(md).not.toContain('W:');
+    expect(md).not.toContain('Weight:');
   });
 });
 
@@ -320,7 +320,7 @@ describe('generateMarkdown — other output', () => {
     expect(md).not.toContain('HRV:');
     expect(md).not.toContain('rMSSD:');
     expect(md).not.toContain('RHR:');
-    expect(md).not.toContain('W:');
+    expect(md).not.toContain('Weight:');
     expect(md).not.toContain('NP:');
     expect(md).not.toContain('TSS:');
   });

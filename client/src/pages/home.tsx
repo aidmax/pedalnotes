@@ -240,7 +240,7 @@ function generateRestMarkdown(data: InsertWorkout): string {
   if (data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
     markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
   }
-  if (data.weight) markdown += `W: ${data.weight}\n`;
+  if (data.weight) markdown += `Weight: ${data.weight}\n`;
 
   if (data.restNotes) {
     markdown += '\n' + formatBulletPoints(data.restNotes) + '\n';
@@ -1280,7 +1280,7 @@ export default function Home() {
                           <FormItem>
                             <FormLabel className="flex items-center gap-2">
                               <Scale className="w-4 h-4 text-purple-500" />
-                              W (Weight)
+                              Weight
                             </FormLabel>
                             <FormControl>
                               <Input
