@@ -474,7 +474,7 @@ export default function Home() {
                         <FormItem>
                           <FormLabel className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                            Workout Date
+                            Date
                           </FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
@@ -687,7 +687,7 @@ export default function Home() {
                           <FormItem>
                             <FormLabel className="flex items-center gap-2">
                               <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              Workout Date
+                              Date
                             </FormLabel>
                             <FormControl>
                               <Input type="date" {...field} />
