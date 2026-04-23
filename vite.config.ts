@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const basePath = process.env.VITE_BASE_PATH ?? '/';
 
 export default defineConfig({
   plugins: [
@@ -40,6 +41,21 @@ export default defineConfig({
             purpose: "any",
           },
         ],
+        shortcuts: [
+          {
+            name: "Quick Note",
+            short_name: "Quick Note",
+            description: "Log a quick workout note with RPE and feel",
+            url: `${basePath}?quick=1`,
+            icons: [
+              {
+                src: "pwa-192x192.png",
+                sizes: "192x192",
+                type: "image/png",
+              },
+            ],
+          },
+        ],
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
@@ -47,7 +63,7 @@ export default defineConfig({
       },
     }),
   ],
-  base: process.env.VITE_BASE_PATH ?? '/',
+  base: basePath,
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
