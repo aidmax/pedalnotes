@@ -132,6 +132,7 @@ function generateRestMarkdown(data: InsertWorkout): string {
     markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
   }
   if (data.weight) markdown += `Weight: ${data.weight}\n`;
+  if (data.feel) markdown += `F: ${data.feel}\n`;
 
   if (data.restNotes) {
     markdown += '\n' + formatBulletPoints(data.restNotes) + '\n';
@@ -249,7 +250,6 @@ describe('generateMarkdown — rest output', () => {
       ...baseRest,
       goal: 'leaked goal',
       rpe: 7,
-      feel: 'S',
       normalizedPower: 200,
       tss: 50,
       choIntake: 'gel',
@@ -258,12 +258,21 @@ describe('generateMarkdown — rest output', () => {
     });
     expect(md).not.toContain('G:');
     expect(md).not.toContain('R:');
-    expect(md).not.toContain('F:');
     expect(md).not.toContain('NP:');
     expect(md).not.toContain('TSS:');
     expect(md).not.toContain('Ci:');
     expect(md).not.toContain('WWW');
     expect(md).not.toContain('WCBI');
+  });
+
+  it('includes feel when provided', () => {
+    const md = generateMarkdown({ ...baseRest, feel: 'N' });
+    expect(md).toContain('F: N');
+  });
+
+  it('omits feel when not set', () => {
+    const md = generateMarkdown(baseRest);
+    expect(md).not.toContain('F:');
   });
 
   it('omits empty optional fields', () => {

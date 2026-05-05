@@ -241,6 +241,7 @@ function generateRestMarkdown(data: InsertWorkout): string {
     markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
   }
   if (data.weight) markdown += `Weight: ${data.weight}\n`;
+  if (data.feel) markdown += `F: ${data.feel}\n`;
 
   if (data.restNotes) {
     markdown += '\n' + formatBulletPoints(data.restNotes) + '\n';
@@ -1291,6 +1292,39 @@ export default function Home() {
                                 onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                                 value={field.value ?? ""}
                               />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="feel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Smile className="w-4 h-4 text-green-500" />
+                              F (Feel): {feelOptions.find(opt => opt.value === field.value)?.label || 'Normal (N)'}
+                            </FormLabel>
+                            <FormControl>
+                              <div className="px-2 py-4">
+                                <Slider
+                                  value={[feelOptions.findIndex(opt => opt.value === field.value) + 1]}
+                                  onValueChange={(value) => field.onChange(feelOptions[value[0] - 1]?.value || 'N')}
+                                  max={5}
+                                  min={1}
+                                  step={1}
+                                  className="w-full"
+                                />
+                                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                                  <span>Weak</span>
+                                  <span>Poor</span>
+                                  <span>Normal</span>
+                                  <span>Good</span>
+                                  <span>Strong</span>
+                                </div>
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>

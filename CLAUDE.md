@@ -99,7 +99,7 @@ Three entry types supported via `entryType` field (default: `cycling`):
 - **`rest`** — rest day logging (Recovery Metrics + Rest Day sections only); auto-expands Recovery Metrics on switch
 - **`other`** — non-cycling activities like MFR/yoga/strength (Activity section only)
 
-`goal`, `rpe`, `feel` are only required when `entryType === "cycling"` (enforced by `superRefine`). Switching entry types does not reset other fields — hidden fields retain their values but don't appear in markdown output.
+`goal`, `rpe`, `feel` are only required when `entryType === "cycling"` (enforced by `superRefine`). `feel` is also optional for rest entries and appears in rest markdown as `F:`. Switching entry types does not reset other fields — hidden fields retain their values but don't appear in markdown output.
 
 Old drafts (pre-entryType) are migrated to `cycling` on restore in `use-form-persistence.ts`.
 
@@ -119,7 +119,7 @@ Old drafts (pre-entryType) are migrated to `cycling` on restore in `use-form-per
 Always required: `entryType` (`cycling`/`rest`/`other`), `workoutDate`
 Cycling-required (via `superRefine`): `goal`, `rpe` (1-10), `feel` (W/P/N/G/S)
 Cycling-optional: `choIntakePre`, `choIntake`, `choIntakePost`, `normalizedPower`, `tss`, `avgHeartRate`, `hrv`, `rMSSD`, `rhr`, `trainerRoadRpe`, `trainerRoadLgt`, `whatWentWell`, `whatCouldBeImproved`, `description`
-Rest-only: `weight` (positive number, kg), `restNotes` (free-form, rendered as bullets). Rest entries also reuse `hrv`/`rMSSD`/`rhr`/`trainerRoadLgt`.
+Rest-only: `weight` (positive number, kg), `restNotes` (free-form, rendered as bullets). Rest entries also reuse `hrv`/`rMSSD`/`rhr`/`trainerRoadLgt`/`feel`.
 Other-only: `activityGoal` (e.g. "MFR", "Yoga"), `activityNotes` (free-form, rendered as bullets).
 
 ### Markdown Abbreviations
@@ -127,7 +127,7 @@ G=Goal (cycling) or Activity (other), R=RPE, F=Feel, Ci-Pre=Carbohydrate Intake 
 
 ### Markdown Output Per Entry Type
 - **cycling**: `G` / `R` / `F` + optional metrics + WWW/WCBI/Planned blocks (current format, unchanged)
-- **rest**: `Rest Day` marker + present-only recovery metrics and `Weight` + bulleted `restNotes`
+- **rest**: `Rest Day` marker + present-only recovery metrics, `Weight`, `F` (feel if set) + bulleted `restNotes`
 - **other**: optional `G: <activity>` + bulleted `activityNotes`; no metrics
 
 ## Environment Variables (Deployment Only)
