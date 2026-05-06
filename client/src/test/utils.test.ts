@@ -119,10 +119,6 @@ function generateCyclingMarkdown(data: InsertWorkout): string {
     markdown += data.description + '\n';
   }
 
-  if (data.dailyNotes) {
-    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
-  }
-
   return markdown;
 }
 
@@ -137,10 +133,6 @@ function generateRestMarkdown(data: InsertWorkout): string {
   }
   if (data.weight) markdown += `Weight: ${data.weight}\n`;
 
-  if (data.dailyNotes) {
-    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
-  }
-
   return markdown;
 }
 
@@ -153,15 +145,15 @@ function generateOtherMarkdown(data: InsertWorkout): string {
     markdown += '\n' + formatBulletPoints(data.activityNotes) + '\n';
   }
 
-  if (data.dailyNotes) {
-    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
-  }
-
   return markdown;
 }
 
 function generateMarkdown(data: InsertWorkout): string {
   let markdown = `---\n## ${formatWorkoutDate(data.workoutDate)}\n\n`;
+
+  if (data.dailyNotes) {
+    markdown += formatBulletPoints(data.dailyNotes) + '\n\n';
+  }
 
   switch (data.entryType) {
     case "rest":
@@ -252,6 +244,16 @@ describe('generateMarkdown — rest output', () => {
     expect(md).toContain('- Decided to skip training');
   });
 
+  it('daily notes appear before Rest Day marker when both present', () => {
+    const md = generateMarkdown({
+      ...baseRest,
+      dailyNotes: 'Feeling off today',
+    });
+    const dailyIdx = md.indexOf('- Feeling off today');
+    const restDayIdx = md.indexOf('Rest Day');
+    expect(dailyIdx).toBeLessThan(restDayIdx);
+  });
+
   it('excludes cycling-only fields', () => {
     const md = generateMarkdown({
       ...baseRest,
@@ -333,7 +335,7 @@ describe('generateMarkdown — other output', () => {
     expect(md).not.toContain('TSS:');
   });
 
-  it('includes daily notes as bullets after activity notes', () => {
+  it('includes daily notes as bullets before activity notes', () => {
     const md = generateMarkdown({
       ...baseOther,
       activityGoal: 'MFR',
@@ -345,7 +347,7 @@ describe('generateMarkdown — other output', () => {
     expect(md).toContain('- Apartment move stress');
     const activityIdx = md.indexOf('- Full body protocol v3');
     const dailyIdx = md.indexOf('- Long day at work');
-    expect(activityIdx).toBeLessThan(dailyIdx);
+    expect(dailyIdx).toBeLessThan(activityIdx);
   });
 
   it('includes daily notes when no activity notes', () => {
@@ -366,7 +368,7 @@ describe('generateMarkdown — cycling daily notes', () => {
     feel: 'G',
   };
 
-  it('includes daily notes at end of cycling output', () => {
+  it('includes daily notes in cycling output', () => {
     const md = generateMarkdown({
       ...base,
       dailyNotes: 'New apartment adaptation\nBarometric pressure dropped',
@@ -375,7 +377,7 @@ describe('generateMarkdown — cycling daily notes', () => {
     expect(md).toContain('- Barometric pressure dropped');
   });
 
-  it('daily notes appear after Planned when both present', () => {
+  it('daily notes appear before Planned when both present', () => {
     const md = generateMarkdown({
       ...base,
       description: 'Sweet Spot Base II',
@@ -383,7 +385,7 @@ describe('generateMarkdown — cycling daily notes', () => {
     });
     const plannedIdx = md.indexOf('Planned');
     const dailyIdx = md.indexOf('- Commute stress');
-    expect(plannedIdx).toBeLessThan(dailyIdx);
+    expect(dailyIdx).toBeLessThan(plannedIdx);
   });
 
   it('omits daily notes section when empty', () => {
