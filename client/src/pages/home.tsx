@@ -229,10 +229,6 @@ function generateCyclingMarkdown(data: InsertWorkout): string {
     markdown += data.description + '\n';
   }
 
-  if (data.dailyNotes) {
-    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
-  }
-
   return markdown;
 }
 
@@ -247,10 +243,6 @@ function generateRestMarkdown(data: InsertWorkout): string {
   }
   if (data.weight) markdown += `Weight: ${data.weight}\n`;
 
-  if (data.dailyNotes) {
-    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
-  }
-
   return markdown;
 }
 
@@ -263,15 +255,15 @@ function generateOtherMarkdown(data: InsertWorkout): string {
     markdown += '\n' + formatBulletPoints(data.activityNotes) + '\n';
   }
 
-  if (data.dailyNotes) {
-    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
-  }
-
   return markdown;
 }
 
 function generateMarkdown(data: InsertWorkout): string {
   let markdown = `---\n## ${formatWorkoutDate(data.workoutDate)}\n\n`;
+
+  if (data.dailyNotes) {
+    markdown += formatBulletPoints(data.dailyNotes) + '\n\n';
+  }
 
   switch (data.entryType) {
     case "rest":
