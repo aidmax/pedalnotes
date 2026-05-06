@@ -119,6 +119,10 @@ function generateCyclingMarkdown(data: InsertWorkout): string {
     markdown += data.description + '\n';
   }
 
+  if (data.dailyNotes) {
+    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
+  }
+
   return markdown;
 }
 
@@ -133,8 +137,8 @@ function generateRestMarkdown(data: InsertWorkout): string {
   }
   if (data.weight) markdown += `Weight: ${data.weight}\n`;
 
-  if (data.restNotes) {
-    markdown += '\n' + formatBulletPoints(data.restNotes) + '\n';
+  if (data.dailyNotes) {
+    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
   }
 
   return markdown;
@@ -147,6 +151,10 @@ function generateOtherMarkdown(data: InsertWorkout): string {
 
   if (data.activityNotes) {
     markdown += '\n' + formatBulletPoints(data.activityNotes) + '\n';
+  }
+
+  if (data.dailyNotes) {
+    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
   }
 
   return markdown;
@@ -235,10 +243,10 @@ describe('generateMarkdown — rest output', () => {
     expect(md).not.toContain('TR-LGT');
   });
 
-  it('formats rest notes as bullet points', () => {
+  it('formats daily notes as bullet points on rest entry', () => {
     const md = generateMarkdown({
       ...baseRest,
-      restNotes: 'Yesterday was stressful\nDecided to skip training',
+      dailyNotes: 'Yesterday was stressful\nDecided to skip training',
     });
     expect(md).toContain('- Yesterday was stressful');
     expect(md).toContain('- Decided to skip training');
@@ -323,5 +331,63 @@ describe('generateMarkdown — other output', () => {
     expect(md).not.toContain('Weight:');
     expect(md).not.toContain('NP:');
     expect(md).not.toContain('TSS:');
+  });
+
+  it('includes daily notes as bullets after activity notes', () => {
+    const md = generateMarkdown({
+      ...baseOther,
+      activityGoal: 'MFR',
+      activityNotes: 'Full body protocol v3',
+      dailyNotes: 'Long day at work\nApartment move stress',
+    });
+    expect(md).toContain('- Full body protocol v3');
+    expect(md).toContain('- Long day at work');
+    expect(md).toContain('- Apartment move stress');
+    const activityIdx = md.indexOf('- Full body protocol v3');
+    const dailyIdx = md.indexOf('- Long day at work');
+    expect(activityIdx).toBeLessThan(dailyIdx);
+  });
+
+  it('includes daily notes when no activity notes', () => {
+    const md = generateMarkdown({
+      ...baseOther,
+      dailyNotes: 'Rest context',
+    });
+    expect(md).toContain('- Rest context');
+  });
+});
+
+describe('generateMarkdown — cycling daily notes', () => {
+  const base: InsertWorkout = {
+    entryType: 'cycling',
+    workoutDate: '2026-04-13',
+    goal: 'Threshold',
+    rpe: 7,
+    feel: 'G',
+  };
+
+  it('includes daily notes at end of cycling output', () => {
+    const md = generateMarkdown({
+      ...base,
+      dailyNotes: 'New apartment adaptation\nBarometric pressure dropped',
+    });
+    expect(md).toContain('- New apartment adaptation');
+    expect(md).toContain('- Barometric pressure dropped');
+  });
+
+  it('daily notes appear after Planned when both present', () => {
+    const md = generateMarkdown({
+      ...base,
+      description: 'Sweet Spot Base II',
+      dailyNotes: 'Commute stress',
+    });
+    const plannedIdx = md.indexOf('Planned');
+    const dailyIdx = md.indexOf('- Commute stress');
+    expect(plannedIdx).toBeLessThan(dailyIdx);
+  });
+
+  it('omits daily notes section when empty', () => {
+    const md = generateMarkdown(base);
+    expect(md).not.toContain('- ');
   });
 });

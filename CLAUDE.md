@@ -117,9 +117,10 @@ Old drafts (pre-entryType) are migrated to `cycling` on restore in `use-form-per
 
 ### Workout Schema Fields
 Always required: `entryType` (`cycling`/`rest`/`other`), `workoutDate`
+Shared-optional: `dailyNotes` (free-form, rendered as bullets; visible on all entry types below the Entry Type selector)
 Cycling-required (via `superRefine`): `goal`, `rpe` (1-10), `feel` (W/P/N/G/S)
 Cycling-optional: `choIntakePre`, `choIntake`, `choIntakePost`, `normalizedPower`, `tss`, `avgHeartRate`, `hrv`, `rMSSD`, `rhr`, `trainerRoadRpe`, `trainerRoadLgt`, `whatWentWell`, `whatCouldBeImproved`, `description`
-Rest-only: `weight` (positive number, kg), `restNotes` (free-form, rendered as bullets). Rest entries also reuse `hrv`/`rMSSD`/`rhr`/`trainerRoadLgt`.
+Rest-only: `weight` (positive number, kg). Rest entries also reuse `hrv`/`rMSSD`/`rhr`/`trainerRoadLgt`.
 Other-only: `activityGoal` (e.g. "MFR", "Yoga"), `activityNotes` (free-form, rendered as bullets).
 
 ### Markdown Abbreviations
@@ -127,7 +128,7 @@ G=Goal (cycling) or Activity (other), R=RPE, F=Feel, Ci-Pre=Carbohydrate Intake 
 
 ### Markdown Output Per Entry Type
 - **cycling**: `G` / `R` / `F` + optional metrics + WWW/WCBI/Planned blocks (current format, unchanged)
-- **rest**: `Rest Day` marker + present-only recovery metrics and `Weight` + bulleted `restNotes`
+- **rest**: `Rest Day` marker + present-only recovery metrics and `Weight` + bulleted `dailyNotes`
 - **other**: optional `G: <activity>` + bulleted `activityNotes`; no metrics
 
 ## Environment Variables (Deployment Only)

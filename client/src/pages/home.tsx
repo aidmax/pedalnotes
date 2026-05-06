@@ -70,7 +70,6 @@ const FIELD_TO_SECTION: Partial<Record<keyof InsertWorkout, SectionId>> = {
   whatCouldBeImproved: "reflection",
   description: "reflection",
   weight: "rest-day",
-  restNotes: "rest-day",
   activityGoal: "activity",
   activityNotes: "activity",
 };
@@ -149,8 +148,8 @@ function getDefaultWorkoutValues(): InsertWorkout {
     whatWentWell: "",
     whatCouldBeImproved: "",
     description: "",
+    dailyNotes: "",
     weight: undefined,
-    restNotes: "",
     activityGoal: "",
     activityNotes: "",
   };
@@ -228,6 +227,10 @@ function generateCyclingMarkdown(data: InsertWorkout): string {
     markdown += data.description + '\n';
   }
 
+  if (data.dailyNotes) {
+    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
+  }
+
   return markdown;
 }
 
@@ -242,8 +245,8 @@ function generateRestMarkdown(data: InsertWorkout): string {
   }
   if (data.weight) markdown += `Weight: ${data.weight}\n`;
 
-  if (data.restNotes) {
-    markdown += '\n' + formatBulletPoints(data.restNotes) + '\n';
+  if (data.dailyNotes) {
+    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
   }
 
   return markdown;
@@ -256,6 +259,10 @@ function generateOtherMarkdown(data: InsertWorkout): string {
 
   if (data.activityNotes) {
     markdown += '\n' + formatBulletPoints(data.activityNotes) + '\n';
+  }
+
+  if (data.dailyNotes) {
+    markdown += '\n' + formatBulletPoints(data.dailyNotes) + '\n';
   }
 
   return markdown;
@@ -722,6 +729,33 @@ export default function Home() {
                           );
                         })}
                       </div>
+                    </div>
+
+                    {/* Daily Notes — all entry types */}
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      <FormField
+                        control={form.control}
+                        name="dailyNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <NotebookPen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                              Daily Notes
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                rows={4}
+                                placeholder="Life context, mood, decisions, stressors... One thought per line."
+                                className="resize-y"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <p className="text-xs text-gray-500">Each line will be formatted as a bullet point</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
                     {/* Core Metrics Section — Cycling only */}
@@ -1269,9 +1303,7 @@ export default function Home() {
                       title="Rest Day"
                       isOpen={sectionStates["rest-day"]}
                       onOpenChange={(open) => setSection("rest-day", open)}
-                      hasData={
-                        watchedValues.weight !== undefined || !!watchedValues.restNotes
-                      }
+                      hasData={watchedValues.weight !== undefined}
                     >
                       <FormField
                         control={form.control}
@@ -1297,29 +1329,6 @@ export default function Home() {
                         )}
                       />
 
-                      <FormField
-                        control={form.control}
-                        name="restNotes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <NotebookPen className="w-4 h-4 text-blue-500" />
-                              Notes
-                            </FormLabel>
-                            <FormControl>
-                              <Textarea
-                                rows={6}
-                                placeholder="How are you feeling? Life context, decisions, mood..."
-                                className="resize-y"
-                                {...field}
-                                value={field.value ?? ""}
-                              />
-                            </FormControl>
-                            <p className="text-xs text-gray-500">Each line will be formatted as a bullet point</p>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                     </CollapsibleSection>
                     )}
 
