@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 
 const SECTION_DEFAULTS: Record<SectionId, boolean> = {
+  "daily-notes": true,
   "core-metrics": true,
   "fueling": false,
   "performance-metrics": false,
@@ -70,6 +71,7 @@ const FIELD_TO_SECTION: Partial<Record<keyof InsertWorkout, SectionId>> = {
   whatCouldBeImproved: "reflection",
   description: "reflection",
   weight: "rest-day",
+  dailyNotes: "daily-notes",
   activityGoal: "activity",
   activityNotes: "activity",
 };
@@ -87,9 +89,9 @@ const entryTypeSubtitles: Record<EntryType, string> = {
 };
 
 const VISIBLE_SECTIONS_BY_TYPE: Record<EntryType, SectionId[]> = {
-  cycling: ["core-metrics", "fueling", "performance-metrics", "recovery-metrics", "reflection"],
-  rest: ["recovery-metrics", "rest-day"],
-  other: ["activity"],
+  cycling: ["daily-notes", "core-metrics", "fueling", "performance-metrics", "recovery-metrics", "reflection"],
+  rest: ["daily-notes", "recovery-metrics", "rest-day"],
+  other: ["daily-notes", "activity"],
 };
 
 const rpeOptions = [
@@ -705,6 +707,35 @@ export default function Home() {
                       />
                     </div>
 
+                    {/* Daily Notes — all entry types */}
+                    <CollapsibleSection
+                      id="daily-notes"
+                      title="Daily Notes"
+                      isOpen={sectionStates["daily-notes"]}
+                      onOpenChange={(open) => setSection("daily-notes", open)}
+                      hasData={!!watchedValues.dailyNotes}
+                    >
+                      <FormField
+                        control={form.control}
+                        name="dailyNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Textarea
+                                rows={4}
+                                placeholder="Life context, mood, decisions, stressors... One thought per line."
+                                className="resize-y"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <p className="text-xs text-gray-500">Each line will be formatted as a bullet point</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CollapsibleSection>
+
                     {/* Entry Type Selector */}
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                       <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white mb-3">
@@ -729,33 +760,6 @@ export default function Home() {
                           );
                         })}
                       </div>
-                    </div>
-
-                    {/* Daily Notes — all entry types */}
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <FormField
-                        control={form.control}
-                        name="dailyNotes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <NotebookPen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              Daily Notes
-                            </FormLabel>
-                            <FormControl>
-                              <Textarea
-                                rows={4}
-                                placeholder="Life context, mood, decisions, stressors... One thought per line."
-                                className="resize-y"
-                                {...field}
-                                value={field.value ?? ""}
-                              />
-                            </FormControl>
-                            <p className="text-xs text-gray-500">Each line will be formatted as a bullet point</p>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                     </div>
 
                     {/* Core Metrics Section — Cycling only */}

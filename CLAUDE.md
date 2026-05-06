@@ -86,12 +86,12 @@ scripts/                              # AWS S3 deployment automation
 - localStorage key: `"pedalnotes-sections"`; stored as `{ version: 1, data: Record<SectionId, boolean> }`
 - On mount: reads stored state, merges defaults for any missing keys, drops unknown keys
 - Version mismatch or malformed data falls back to defaults and overwrites stored value
-- Default expansion: Core Metrics=open, Reflection=open, Rest Day=open, Activity=open; Fueling/Performance/Recovery=collapsed
+- Default expansion: Daily Notes=open, Core Metrics=open, Reflection=open, Rest Day=open, Activity=open; Fueling/Performance/Recovery=collapsed
 - `toggleSection(id)`, `setSection(id, open)`, `resetSections()` — writes persist immediately (no debounce)
 - `QuotaExceededError` on write is caught; section states still work in memory
 - Section states are independent from form draft; clearing the form does not reset section states
-- Section IDs: `core-metrics`, `fueling`, `performance-metrics`, `recovery-metrics`, `reflection`, `rest-day`, `activity`
-- Visible sections depend on `entryType` — `expandAllOrCollapseAll` only affects currently visible sections
+- Section IDs: `daily-notes`, `core-metrics`, `fueling`, `performance-metrics`, `recovery-metrics`, `reflection`, `rest-day`, `activity`
+- Visible sections depend on `entryType` — `expandAllOrCollapseAll` only affects currently visible sections; `daily-notes` is included in all three entry type section lists
 
 ### Entry Types
 Three entry types supported via `entryType` field (default: `cycling`):
