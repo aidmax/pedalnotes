@@ -128,7 +128,7 @@ G=Goal (cycling) or Activity (other), R=RPE, F=Feel, Ci-Pre=Carbohydrate Intake 
 
 ### Markdown Output Per Entry Type
 - **cycling**: `G` / `R` / `F` + optional metrics + WWW/WCBI/Planned blocks (current format, unchanged)
-- **rest**: `Rest Day` marker + present-only recovery metrics and `Weight` + bulleted `restNotes`
+- **rest**: `Rest Day` marker + present-only recovery metrics and `Weight` + bulleted `dailyNotes`
 - **other**: optional `G: <activity>` + bulleted `activityNotes`; no metrics
 
 ## Environment Variables (Deployment Only)
