@@ -91,7 +91,7 @@ const entryTypeSubtitles: Record<EntryType, string> = {
 const VISIBLE_SECTIONS_BY_TYPE: Record<EntryType, SectionId[]> = {
   cycling: ["daily-notes", "core-metrics", "fueling", "performance-metrics", "recovery-metrics", "reflection"],
   rest: ["daily-notes", "recovery-metrics", "rest-day"],
-  other: ["daily-notes", "activity"],
+  other: ["daily-notes", "recovery-metrics", "activity"],
 };
 
 const rpeOptions = [
@@ -248,6 +248,13 @@ function generateRestMarkdown(data: InsertWorkout): string {
 
 function generateOtherMarkdown(data: InsertWorkout): string {
   let markdown = "";
+
+  if (data.hrv) markdown += `HRV: ${data.hrv}\n`;
+  if (data.rMSSD) markdown += `rMSSD: ${data.rMSSD}\n`;
+  if (data.rhr) markdown += `RHR: ${data.rhr}\n`;
+  if (data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
+    markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
+  }
 
   if (data.activityGoal) markdown += `G: ${data.activityGoal}\n`;
 
@@ -1105,8 +1112,8 @@ export default function Home() {
                     </CollapsibleSection>
                     )}
 
-                    {/* Recovery Metrics Section — Cycling + Rest */}
-                    {(entryType === "cycling" || entryType === "rest") && (
+                    {/* Recovery Metrics Section — Cycling + Rest + Other */}
+                    {(entryType === "cycling" || entryType === "rest" || entryType === "other") && (
                     <CollapsibleSection
                       id="recovery-metrics"
                       title="Recovery Metrics"

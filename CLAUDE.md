@@ -97,7 +97,7 @@ scripts/                              # AWS S3 deployment automation
 Three entry types supported via `entryType` field (default: `cycling`):
 - **`cycling`** — full cycling workout form (Core Metrics, Fueling, Performance, Recovery, Reflection)
 - **`rest`** — rest day logging (Recovery Metrics + Rest Day sections only); auto-expands Recovery Metrics on switch
-- **`other`** — non-cycling activities like MFR/yoga/strength (Activity section only)
+- **`other`** — non-cycling activities like MFR/yoga/strength (Recovery Metrics + Activity sections; Recovery Metrics collapsed by default, no auto-expand on switch)
 
 `goal`, `rpe`, `feel` are only required when `entryType === "cycling"` (enforced by `superRefine`). Switching entry types does not reset other fields — hidden fields retain their values but don't appear in markdown output.
 
@@ -121,7 +121,7 @@ Shared-optional: `dailyNotes` (free-form, rendered as bullets; visible on all en
 Cycling-required (via `superRefine`): `goal`, `rpe` (1-10), `feel` (W/P/N/G/S)
 Cycling-optional: `choIntakePre`, `choIntake`, `choIntakePost`, `normalizedPower`, `tss`, `avgHeartRate`, `hrv`, `rMSSD`, `rhr`, `trainerRoadRpe`, `trainerRoadLgt`, `whatWentWell`, `whatCouldBeImproved`, `description`
 Rest-only: `weight` (positive number, kg). Rest entries also reuse `hrv`/`rMSSD`/`rhr`/`trainerRoadLgt`.
-Other-only: `activityGoal` (e.g. "MFR", "Yoga"), `activityNotes` (free-form, rendered as bullets).
+Other-only: `activityGoal` (e.g. "MFR", "Yoga"), `activityNotes` (free-form, rendered as bullets). Other entries also reuse `hrv`/`rMSSD`/`rhr`/`trainerRoadLgt` (not `weight`).
 
 ### Markdown Abbreviations
 G=Goal (cycling) or Activity (other), R=RPE, F=Feel, Ci-Pre=Carbohydrate Intake Pre-Workout, Ci=Carbohydrate Intake During Ride, Ci-Post=Carbohydrate Intake Post-Workout, NP=Normalized Power, TSS=Training Stress Score, Hr=Heart Rate, HRV=Heart Rate Variability, rMSSD=HRV Recovery Metric, RHR=Resting Heart Rate, TR-RPE=TrainerRoad RPE, TR-LGT=TrainerRoad Light, Weight (rest — written out in full)
@@ -129,7 +129,7 @@ G=Goal (cycling) or Activity (other), R=RPE, F=Feel, Ci-Pre=Carbohydrate Intake 
 ### Markdown Output Per Entry Type
 - **cycling**: `G` / `R` / `F` + optional metrics + WWW/WCBI/Planned blocks (current format, unchanged)
 - **rest**: `Rest Day` marker + present-only recovery metrics and `Weight` + bulleted `dailyNotes`
-- **other**: optional `G: <activity>` + bulleted `activityNotes`; no metrics
+- **other**: present-only recovery metrics (`HRV`/`rMSSD`/`RHR`/`TR-LGT`) + optional `G: <activity>` + bulleted `activityNotes`
 
 ## Environment Variables (Deployment Only)
 ```
