@@ -48,6 +48,7 @@ client/src/
 ├── components/ui/                    # shadcn/ui components
 ├── hooks/
 │   ├── use-form-persistence.ts       # Auto-save/restore form draft to localStorage
+│   ├── use-settings.ts               # Persisted app settings (e.g. TrainerRoad metrics visibility)
 │   ├── use-theme.ts                  # Dark/light theme toggle
 │   └── use-toast.ts                  # Toast notification system
 └── test/                             # Vitest tests
@@ -65,7 +66,9 @@ scripts/                              # AWS S3 deployment automation
 - `shared/schema-static.ts` - Zod schema defining workout data structure
 - `client/src/hooks/use-form-persistence.ts` - Debounced form draft auto-save/restore
 - `client/src/hooks/use-section-state.ts` - Persisted open/closed state for collapsible form sections
+- `client/src/hooks/use-settings.ts` - Persisted app settings (TrainerRoad metrics visibility)
 - `client/src/components/ui/collapsible-section.tsx` - Reusable `<details>`-based collapsible section component
+- `client/src/components/ui/settings-panel.tsx` - Settings modal (opened via gear icon in the header)
 
 ### PWA Setup
 - `vite-plugin-pwa` generates the service worker (Workbox) and injects manifest link automatically
@@ -92,6 +95,13 @@ scripts/                              # AWS S3 deployment automation
 - Section states are independent from form draft; clearing the form does not reset section states
 - Section IDs: `daily-notes`, `core-metrics`, `fueling`, `performance-metrics`, `recovery-metrics`, `reflection`, `rest-day`, `activity`
 - Visible sections depend on `entryType` — `expandAllOrCollapseAll` only affects currently visible sections; `daily-notes` is included in all three entry type section lists
+
+### Settings Persistence
+- `useSettings({ key, defaults })` manages persisted app-wide settings, opened via the gear icon in the header (`SettingsPanel`)
+- localStorage key: `"pedalnotes-settings"`; stored as `{ version: 1, data: Settings }` (same envelope shape as section state)
+- On mount: reads stored state, merges defaults for any missing keys, drops unknown keys; version mismatch or malformed data falls back to defaults and overwrites stored value
+- `setSetting(key, value)` — writes persist immediately (no debounce); `QuotaExceededError` on write is caught and settings still work in memory
+- Current setting: `showTrainerRoadMetrics` (boolean, **default `false` — opt-in**). When off, the `trainerRoadRpe` (TR-RPE, Core Metrics) and `trainerRoadLgt` (TR-LGT, Recovery Metrics) fields are hidden from the form and omitted from generated markdown, even if values were previously entered — same "hidden fields retain their values but don't appear in markdown output" behavior used for `entryType` switching. `generateMarkdown`/`generateCyclingMarkdown`/`generateRestMarkdown`/`generateOtherMarkdown` all take a `showTrainerRoadMetrics` parameter to enforce this.
 
 ### Entry Types
 Three entry types supported via `entryType` field (default: `cycling`):

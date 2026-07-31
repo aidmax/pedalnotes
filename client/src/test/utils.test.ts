@@ -83,7 +83,7 @@ function formatWorkoutDate(dateStr: string): string {
   return `${day}.${month}.${year}`;
 }
 
-function generateCyclingMarkdown(data: InsertWorkout): string {
+function generateCyclingMarkdown(data: InsertWorkout, showTrainerRoadMetrics = true): string {
   let markdown = "";
 
   if (data.goal) markdown += `G: ${data.goal}\n`;
@@ -96,11 +96,11 @@ function generateCyclingMarkdown(data: InsertWorkout): string {
   if (data.normalizedPower) markdown += `NP: ${data.normalizedPower}\n`;
   if (data.tss) markdown += `TSS: ${data.tss}\n`;
   if (data.avgHeartRate) markdown += `Hr: ${data.avgHeartRate}\n`;
-  if (data.trainerRoadRpe) markdown += `TR-RPE: ${data.trainerRoadRpe}\n`;
+  if (showTrainerRoadMetrics && data.trainerRoadRpe) markdown += `TR-RPE: ${data.trainerRoadRpe}\n`;
   if (data.hrv) markdown += `HRV: ${data.hrv}\n`;
   if (data.rMSSD) markdown += `rMSSD: ${data.rMSSD}\n`;
   if (data.rhr) markdown += `RHR: ${data.rhr}\n`;
-  if (data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
+  if (showTrainerRoadMetrics && data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
     markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
   }
 
@@ -122,13 +122,13 @@ function generateCyclingMarkdown(data: InsertWorkout): string {
   return markdown;
 }
 
-function generateRestMarkdown(data: InsertWorkout): string {
+function generateRestMarkdown(data: InsertWorkout, showTrainerRoadMetrics = true): string {
   let markdown = "Rest Day\n\n";
 
   if (data.hrv) markdown += `HRV: ${data.hrv}\n`;
   if (data.rMSSD) markdown += `rMSSD: ${data.rMSSD}\n`;
   if (data.rhr) markdown += `RHR: ${data.rhr}\n`;
-  if (data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
+  if (showTrainerRoadMetrics && data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
     markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
   }
   if (data.weight) markdown += `Weight: ${data.weight}\n`;
@@ -136,8 +136,15 @@ function generateRestMarkdown(data: InsertWorkout): string {
   return markdown;
 }
 
-function generateOtherMarkdown(data: InsertWorkout): string {
+function generateOtherMarkdown(data: InsertWorkout, showTrainerRoadMetrics = true): string {
   let markdown = "";
+
+  if (data.hrv) markdown += `HRV: ${data.hrv}\n`;
+  if (data.rMSSD) markdown += `rMSSD: ${data.rMSSD}\n`;
+  if (data.rhr) markdown += `RHR: ${data.rhr}\n`;
+  if (showTrainerRoadMetrics && data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
+    markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
+  }
 
   if (data.activityGoal) markdown += `G: ${data.activityGoal}\n`;
 
@@ -148,7 +155,7 @@ function generateOtherMarkdown(data: InsertWorkout): string {
   return markdown;
 }
 
-function generateMarkdown(data: InsertWorkout): string {
+function generateMarkdown(data: InsertWorkout, showTrainerRoadMetrics = true): string {
   let markdown = `---\n## ${formatWorkoutDate(data.workoutDate)}\n\n`;
 
   if (data.dailyNotes) {
@@ -157,14 +164,14 @@ function generateMarkdown(data: InsertWorkout): string {
 
   switch (data.entryType) {
     case "rest":
-      markdown += generateRestMarkdown(data);
+      markdown += generateRestMarkdown(data, showTrainerRoadMetrics);
       break;
     case "other":
-      markdown += generateOtherMarkdown(data);
+      markdown += generateOtherMarkdown(data, showTrainerRoadMetrics);
       break;
     case "cycling":
     default:
-      markdown += generateCyclingMarkdown(data);
+      markdown += generateCyclingMarkdown(data, showTrainerRoadMetrics);
       break;
   }
 
@@ -311,25 +318,26 @@ describe('generateMarkdown — other output', () => {
     expect(md).toContain('- Calves and quads were tender');
   });
 
-  it('excludes all metrics and cycling fields', () => {
+  it('includes reused recovery metrics but excludes cycling-only fields', () => {
     const md = generateMarkdown({
       ...baseOther,
       activityGoal: 'Yoga',
       goal: 'leaked',
       rpe: 5,
       feel: 'N',
-      hrv: 'leaked',
+      hrv: 'Recovered',
       rMSSD: 40,
       rhr: 60,
       weight: 80,
       normalizedPower: 200,
       tss: 50,
     });
-    expect(md).not.toContain('R:');
-    expect(md).not.toContain('F:');
-    expect(md).not.toContain('HRV:');
-    expect(md).not.toContain('rMSSD:');
-    expect(md).not.toContain('RHR:');
+    expect(md).toContain('HRV: Recovered');
+    expect(md).toContain('rMSSD: 40');
+    expect(md).toContain('RHR: 60');
+    // Use line-start matches for R:/F: since "RHR:" otherwise falsely matches a naive "R:" substring check
+    expect(md).not.toMatch(/(^|\n)R: /);
+    expect(md).not.toMatch(/(^|\n)F: /);
     expect(md).not.toContain('Weight:');
     expect(md).not.toContain('NP:');
     expect(md).not.toContain('TSS:');
@@ -391,5 +399,57 @@ describe('generateMarkdown — cycling daily notes', () => {
   it('omits daily notes section when empty', () => {
     const md = generateMarkdown(base);
     expect(md).not.toContain('- ');
+  });
+});
+
+describe('generateMarkdown — TrainerRoad metrics gating', () => {
+  it('includes TR-RPE and TR-LGT for cycling when showTrainerRoadMetrics is true', () => {
+    const md = generateMarkdown(
+      { ...baseCyclingWorkout, trainerRoadRpe: 3, trainerRoadLgt: 'Y' },
+      true
+    );
+    expect(md).toContain('TR-RPE: 3');
+    expect(md).toContain('TR-LGT: Y');
+  });
+
+  it('omits TR-RPE and TR-LGT for cycling when showTrainerRoadMetrics is false, even with values set', () => {
+    const md = generateMarkdown(
+      { ...baseCyclingWorkout, trainerRoadRpe: 3, trainerRoadLgt: 'Y' },
+      false
+    );
+    expect(md).not.toContain('TR-RPE');
+    expect(md).not.toContain('TR-LGT');
+  });
+
+  it('omits TR-LGT for rest when showTrainerRoadMetrics is false, even with a value set', () => {
+    const md = generateMarkdown(
+      { entryType: 'rest', workoutDate: '2026-04-13', trainerRoadLgt: 'R' },
+      false
+    );
+    expect(md).not.toContain('TR-LGT');
+  });
+
+  it('includes TR-LGT for rest when showTrainerRoadMetrics is true', () => {
+    const md = generateMarkdown(
+      { entryType: 'rest', workoutDate: '2026-04-13', trainerRoadLgt: 'R' },
+      true
+    );
+    expect(md).toContain('TR-LGT: R');
+  });
+
+  it('omits TR-LGT for other when showTrainerRoadMetrics is false, even with a value set', () => {
+    const md = generateMarkdown(
+      { entryType: 'other', workoutDate: '2026-04-13', trainerRoadLgt: 'R' },
+      false
+    );
+    expect(md).not.toContain('TR-LGT');
+  });
+
+  it('includes TR-LGT for other when showTrainerRoadMetrics is true', () => {
+    const md = generateMarkdown(
+      { entryType: 'other', workoutDate: '2026-04-13', trainerRoadLgt: 'R' },
+      true
+    );
+    expect(md).toContain('TR-LGT: R');
   });
 });
