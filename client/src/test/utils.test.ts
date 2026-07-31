@@ -136,8 +136,15 @@ function generateRestMarkdown(data: InsertWorkout, showTrainerRoadMetrics = true
   return markdown;
 }
 
-function generateOtherMarkdown(data: InsertWorkout): string {
+function generateOtherMarkdown(data: InsertWorkout, showTrainerRoadMetrics = true): string {
   let markdown = "";
+
+  if (data.hrv) markdown += `HRV: ${data.hrv}\n`;
+  if (data.rMSSD) markdown += `rMSSD: ${data.rMSSD}\n`;
+  if (data.rhr) markdown += `RHR: ${data.rhr}\n`;
+  if (showTrainerRoadMetrics && data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
+    markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
+  }
 
   if (data.activityGoal) markdown += `G: ${data.activityGoal}\n`;
 
@@ -160,7 +167,7 @@ function generateMarkdown(data: InsertWorkout, showTrainerRoadMetrics = true): s
       markdown += generateRestMarkdown(data, showTrainerRoadMetrics);
       break;
     case "other":
-      markdown += generateOtherMarkdown(data);
+      markdown += generateOtherMarkdown(data, showTrainerRoadMetrics);
       break;
     case "cycling":
     default:
@@ -311,25 +318,26 @@ describe('generateMarkdown — other output', () => {
     expect(md).toContain('- Calves and quads were tender');
   });
 
-  it('excludes all metrics and cycling fields', () => {
+  it('includes reused recovery metrics but excludes cycling-only fields', () => {
     const md = generateMarkdown({
       ...baseOther,
       activityGoal: 'Yoga',
       goal: 'leaked',
       rpe: 5,
       feel: 'N',
-      hrv: 'leaked',
+      hrv: 'Recovered',
       rMSSD: 40,
       rhr: 60,
       weight: 80,
       normalizedPower: 200,
       tss: 50,
     });
-    expect(md).not.toContain('R:');
-    expect(md).not.toContain('F:');
-    expect(md).not.toContain('HRV:');
-    expect(md).not.toContain('rMSSD:');
-    expect(md).not.toContain('RHR:');
+    expect(md).toContain('HRV: Recovered');
+    expect(md).toContain('rMSSD: 40');
+    expect(md).toContain('RHR: 60');
+    // Use line-start matches for R:/F: since "RHR:" otherwise falsely matches a naive "R:" substring check
+    expect(md).not.toMatch(/(^|\n)R: /);
+    expect(md).not.toMatch(/(^|\n)F: /);
     expect(md).not.toContain('Weight:');
     expect(md).not.toContain('NP:');
     expect(md).not.toContain('TSS:');
@@ -424,6 +432,22 @@ describe('generateMarkdown — TrainerRoad metrics gating', () => {
   it('includes TR-LGT for rest when showTrainerRoadMetrics is true', () => {
     const md = generateMarkdown(
       { entryType: 'rest', workoutDate: '2026-04-13', trainerRoadLgt: 'R' },
+      true
+    );
+    expect(md).toContain('TR-LGT: R');
+  });
+
+  it('omits TR-LGT for other when showTrainerRoadMetrics is false, even with a value set', () => {
+    const md = generateMarkdown(
+      { entryType: 'other', workoutDate: '2026-04-13', trainerRoadLgt: 'R' },
+      false
+    );
+    expect(md).not.toContain('TR-LGT');
+  });
+
+  it('includes TR-LGT for other when showTrainerRoadMetrics is true', () => {
+    const md = generateMarkdown(
+      { entryType: 'other', workoutDate: '2026-04-13', trainerRoadLgt: 'R' },
       true
     );
     expect(md).toContain('TR-LGT: R');

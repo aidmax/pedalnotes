@@ -48,6 +48,7 @@ export function useSettings(options: UseSettingsOptions): {
       }
     } catch (err) {
       console.error("[use-settings] Failed to restore settings:", err);
+      persistRaw(key, defaults);
     }
     return { ...defaults };
   });

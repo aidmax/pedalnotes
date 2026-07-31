@@ -49,12 +49,16 @@ describe("useSettings", () => {
     expect(stored.data.showTrainerRoadMetrics).toBe(true);
   });
 
-  it("discards malformed localStorage data and falls back to defaults", () => {
+  it("discards malformed localStorage data, falls back to defaults, and overwrites the bad value", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     localStorage.setItem(SETTINGS_KEY, "not valid json {{{{");
 
     const { result } = renderHookWithDefaults();
     expect(result.current.settings).toEqual(defaults);
+
+    // Should overwrite the malformed value so subsequent mounts don't re-hit the parse error
+    const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY)!);
+    expect(stored).toEqual({ version: 1, data: defaults });
 
     consoleSpy.mockRestore();
   });
