@@ -41,8 +41,11 @@ import {
   ClipboardList,
   Scale,
   NotebookPen,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Github
 } from "lucide-react";
+
+const REPO_URL = "https://github.com/aidmax/pedalnotes";
 
 const SECTION_DEFAULTS: Record<SectionId, boolean> = {
   "daily-notes": true,
@@ -461,6 +464,15 @@ export default function Home() {
                 >
                   Full form
                 </a>
+                <a
+                  href={REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="View source on GitHub"
+                  className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+                >
+                  <Github className="w-5 h-5" />
+                </a>
                 <button
                   onClick={() => setSettingsOpen(true)}
                   aria-label="Open settings"
@@ -678,6 +690,15 @@ export default function Home() {
               Privacy-first training journal for cyclists
             </div>
             <div className="flex items-center gap-1">
+              <a
+                href={REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View source on GitHub"
+                className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+              >
+                <Github className="w-5 h-5" />
+              </a>
               <button
                 onClick={() => setSettingsOpen(true)}
                 aria-label="Open settings"
