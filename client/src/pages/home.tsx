@@ -449,7 +449,7 @@ export default function Home() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
+            <div className="flex flex-wrap justify-between items-center py-4 gap-2">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-brand-blue rounded-lg flex items-center justify-center">
                   <Zap className="w-5 h-5 text-white" />
