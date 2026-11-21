@@ -50,6 +50,12 @@ export function useFormPersistence<T extends FieldValues>(
         if (data && typeof data === "object" && !data.entryType) {
           data.entryType = "cycling";
         }
+        if (data && typeof data === "object" && data.restNotes && !data.dailyNotes) {
+          data.dailyNotes = data.restNotes;
+        }
+        if (data && typeof data === "object") {
+          delete data.restNotes;
+        }
         form.reset(draft.data);
         setWasRestored(true);
       }

@@ -5,12 +5,15 @@ import { useSectionState, type SectionId } from "@/hooks/use-section-state";
 const SECTIONS_KEY = "pedalnotes-sections-test";
 
 const defaults: Record<SectionId, boolean> = {
+  "daily-notes": true,
   "core-metrics": true,
   "fueling": false,
   environment: false,
   "performance-metrics": false,
   "recovery-metrics": false,
   "reflection": true,
+  "rest-day": true,
+  "activity": true,
 };
 
 function makeStored(data: Record<SectionId, boolean>, version = 1) {
@@ -39,12 +42,15 @@ describe("useSectionState", () => {
 
   it("restores persisted state on mount", () => {
     const persisted: Record<SectionId, boolean> = {
+      "daily-notes": false,
       "core-metrics": false,
       "fueling": true,
       environment: true,
       "performance-metrics": true,
       "recovery-metrics": false,
       "reflection": false,
+      "rest-day": false,
+      "activity": false,
     };
     localStorage.setItem(SECTIONS_KEY, makeStored(persisted));
 

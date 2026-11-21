@@ -48,6 +48,7 @@ client/src/
 ├── components/ui/                    # shadcn/ui components
 ├── hooks/
 │   ├── use-form-persistence.ts       # Auto-save/restore form draft to localStorage
+│   ├── use-settings.ts               # Persisted app settings (e.g. TrainerRoad metrics visibility)
 │   ├── use-theme.ts                  # Dark/light theme toggle
 │   └── use-toast.ts                  # Toast notification system
 └── test/                             # Vitest tests
@@ -65,7 +66,9 @@ scripts/                              # AWS S3 deployment automation
 - `shared/schema-static.ts` - Zod schema defining workout data structure
 - `client/src/hooks/use-form-persistence.ts` - Debounced form draft auto-save/restore
 - `client/src/hooks/use-section-state.ts` - Persisted open/closed state for collapsible form sections
+- `client/src/hooks/use-settings.ts` - Persisted app settings (TrainerRoad metrics visibility)
 - `client/src/components/ui/collapsible-section.tsx` - Reusable `<details>`-based collapsible section component
+- `client/src/components/ui/settings-panel.tsx` - Settings modal (opened via gear icon in the header)
 
 ### PWA Setup
 - `vite-plugin-pwa` generates the service worker (Workbox) and injects manifest link automatically
@@ -86,18 +89,25 @@ scripts/                              # AWS S3 deployment automation
 - localStorage key: `"pedalnotes-sections"`; stored as `{ version: 1, data: Record<SectionId, boolean> }`
 - On mount: reads stored state, merges defaults for any missing keys, drops unknown keys
 - Version mismatch or malformed data falls back to defaults and overwrites stored value
-- Default expansion: Core Metrics=open, Reflection=open, Rest Day=open, Activity=open; Fueling/Performance/Recovery=collapsed
+- Default expansion: Daily Notes=open, Core Metrics=open, Reflection=open, Rest Day=open, Activity=open; Fueling/Performance/Recovery=collapsed
 - `toggleSection(id)`, `setSection(id, open)`, `resetSections()` — writes persist immediately (no debounce)
 - `QuotaExceededError` on write is caught; section states still work in memory
 - Section states are independent from form draft; clearing the form does not reset section states
-- Section IDs: `core-metrics`, `fueling`, `performance-metrics`, `recovery-metrics`, `reflection`, `rest-day`, `activity`
-- Visible sections depend on `entryType` — `expandAllOrCollapseAll` only affects currently visible sections
+- Section IDs: `daily-notes`, `core-metrics`, `fueling`, `performance-metrics`, `recovery-metrics`, `reflection`, `rest-day`, `activity`
+- Visible sections depend on `entryType` — `expandAllOrCollapseAll` only affects currently visible sections; `daily-notes` is included in all three entry type section lists
+
+### Settings Persistence
+- `useSettings({ key, defaults })` manages persisted app-wide settings, opened via the gear icon in the header (`SettingsPanel`)
+- localStorage key: `"pedalnotes-settings"`; stored as `{ version: 1, data: Settings }` (same envelope shape as section state)
+- On mount: reads stored state, merges defaults for any missing keys, drops unknown keys; version mismatch or malformed data falls back to defaults and overwrites stored value
+- `setSetting(key, value)` — writes persist immediately (no debounce); `QuotaExceededError` on write is caught and settings still work in memory
+- Current setting: `showTrainerRoadMetrics` (boolean, **default `false` — opt-in**). When off, the `trainerRoadRpe` (TR-RPE, Core Metrics) and `trainerRoadLgt` (TR-LGT, Recovery Metrics) fields are hidden from the form and omitted from generated markdown, even if values were previously entered — same "hidden fields retain their values but don't appear in markdown output" behavior used for `entryType` switching. `generateMarkdown`/`generateCyclingMarkdown`/`generateRestMarkdown`/`generateOtherMarkdown` all take a `showTrainerRoadMetrics` parameter to enforce this.
 
 ### Entry Types
 Three entry types supported via `entryType` field (default: `cycling`):
 - **`cycling`** — full cycling workout form (Core Metrics, Fueling, Performance, Recovery, Reflection)
 - **`rest`** — rest day logging (Recovery Metrics + Rest Day sections only); auto-expands Recovery Metrics on switch
-- **`other`** — non-cycling activities like MFR/yoga/strength (Activity section only)
+- **`other`** — non-cycling activities like MFR/yoga/strength (Recovery Metrics + Activity sections; Recovery Metrics collapsed by default, no auto-expand on switch)
 
 `goal`, `rpe`, `feel` are only required when `entryType === "cycling"` (enforced by `superRefine`). Switching entry types does not reset other fields — hidden fields retain their values but don't appear in markdown output.
 
@@ -117,18 +127,19 @@ Old drafts (pre-entryType) are migrated to `cycling` on restore in `use-form-per
 
 ### Workout Schema Fields
 Always required: `entryType` (`cycling`/`rest`/`other`), `workoutDate`
+Shared-optional: `dailyNotes` (free-form, rendered as bullets; visible on all entry types below the Entry Type selector)
 Cycling-required (via `superRefine`): `goal`, `rpe` (1-10), `feel` (W/P/N/G/S)
 Cycling-optional: `choIntakePre`, `choIntake`, `choIntakePost`, `normalizedPower`, `tss`, `avgHeartRate`, `hrv`, `rMSSD`, `rhr`, `trainerRoadRpe`, `trainerRoadLgt`, `whatWentWell`, `whatCouldBeImproved`, `description`
-Rest-only: `weight` (positive number, kg), `restNotes` (free-form, rendered as bullets). Rest entries also reuse `hrv`/`rMSSD`/`rhr`/`trainerRoadLgt`.
-Other-only: `activityGoal` (e.g. "MFR", "Yoga"), `activityNotes` (free-form, rendered as bullets).
+Rest-only: `weight` (positive number, kg). Rest entries also reuse `hrv`/`rMSSD`/`rhr`/`trainerRoadLgt`.
+Other-only: `activityGoal` (e.g. "MFR", "Yoga"), `activityNotes` (free-form, rendered as bullets). Other entries also reuse `hrv`/`rMSSD`/`rhr`/`trainerRoadLgt` (not `weight`).
 
 ### Markdown Abbreviations
 G=Goal (cycling) or Activity (other), R=RPE, F=Feel, Ci-Pre=Carbohydrate Intake Pre-Workout, Ci=Carbohydrate Intake During Ride, Ci-Post=Carbohydrate Intake Post-Workout, NP=Normalized Power, TSS=Training Stress Score, Hr=Heart Rate, HRV=Heart Rate Variability, rMSSD=HRV Recovery Metric, RHR=Resting Heart Rate, TR-RPE=TrainerRoad RPE, TR-LGT=TrainerRoad Light, Weight (rest — written out in full)
 
 ### Markdown Output Per Entry Type
 - **cycling**: `G` / `R` / `F` + optional metrics + WWW/WCBI/Planned blocks (current format, unchanged)
-- **rest**: `Rest Day` marker + present-only recovery metrics and `Weight` + bulleted `restNotes`
-- **other**: optional `G: <activity>` + bulleted `activityNotes`; no metrics
+- **rest**: `Rest Day` marker + present-only recovery metrics and `Weight` + bulleted `dailyNotes`
+- **other**: present-only recovery metrics (`HRV`/`rMSSD`/`RHR`/`TR-LGT`) + optional `G: <activity>` + bulleted `activityNotes`
 
 ## Environment Variables (Deployment Only)
 ```

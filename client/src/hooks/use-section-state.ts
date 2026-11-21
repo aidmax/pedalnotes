@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 export type SectionId =
+  | "daily-notes"
   | "core-metrics"
   | "fueling"
   | "environment"
@@ -11,6 +12,7 @@ export type SectionId =
   | "activity";
 
 const ALL_SECTION_IDS: SectionId[] = [
+  "daily-notes",
   "core-metrics",
   "fueling",
   "environment",

@@ -191,7 +191,7 @@ describe('Workout Schema Validation', () => {
         rMSSD: 30,
         rhr: 63,
         weight: 82.5,
-        restNotes: 'Took a real day off',
+        dailyNotes: 'Took a real day off',
       };
       const result = insertWorkoutSchema.safeParse(restWorkout);
       expect(result.success).toBe(true);

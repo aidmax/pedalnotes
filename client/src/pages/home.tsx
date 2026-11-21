@@ -11,10 +11,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import { SettingsPanel } from "@/components/ui/settings-panel";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
 import { useFormPersistence } from "@/hooks/use-form-persistence";
 import { useSectionState, type SectionId } from "@/hooks/use-section-state";
+import { useSettings, type Settings } from "@/hooks/use-settings";
 import {
   Zap,
   Copy,
@@ -38,10 +40,15 @@ import {
   Dumbbell,
   ClipboardList,
   Scale,
-  NotebookPen
+  NotebookPen,
+  Settings as SettingsIcon,
+  Github
 } from "lucide-react";
 
+const REPO_URL = "https://github.com/aidmax/pedalnotes";
+
 const SECTION_DEFAULTS: Record<SectionId, boolean> = {
+  "daily-notes": true,
   "core-metrics": true,
   "fueling": false,
   environment: false,
@@ -50,6 +57,10 @@ const SECTION_DEFAULTS: Record<SectionId, boolean> = {
   "reflection": true,
   "rest-day": true,
   "activity": true,
+};
+
+const SETTINGS_DEFAULTS: Settings = {
+  showTrainerRoadMetrics: false,
 };
 
 const FIELD_TO_SECTION: Partial<Record<keyof InsertWorkout, SectionId>> = {
@@ -73,7 +84,7 @@ const FIELD_TO_SECTION: Partial<Record<keyof InsertWorkout, SectionId>> = {
   whatCouldBeImproved: "reflection",
   description: "reflection",
   weight: "rest-day",
-  restNotes: "rest-day",
+  dailyNotes: "daily-notes",
   activityGoal: "activity",
   activityNotes: "activity",
 };
@@ -91,9 +102,9 @@ const entryTypeSubtitles: Record<EntryType, string> = {
 };
 
 const VISIBLE_SECTIONS_BY_TYPE: Record<EntryType, SectionId[]> = {
-  cycling: ["core-metrics", "fueling", "environment", "performance-metrics", "recovery-metrics", "reflection"],
-  rest: ["recovery-metrics", "rest-day"],
-  other: ["activity"],
+  cycling: ["daily-notes", "core-metrics", "fueling", "environment", "performance-metrics", "recovery-metrics", "reflection"],
+  rest: ["daily-notes", "recovery-metrics", "rest-day"],
+  other: ["daily-notes", "recovery-metrics", "activity"],
 };
 
 const rpeOptions = [
@@ -154,8 +165,8 @@ function getDefaultWorkoutValues(): InsertWorkout {
     whatWentWell: "",
     whatCouldBeImproved: "",
     description: "",
+    dailyNotes: "",
     weight: undefined,
-    restNotes: "",
     activityGoal: "",
     activityNotes: "",
   };
@@ -195,7 +206,7 @@ function formatWorkoutDate(dateStr: string): string {
   return `${day}.${month}.${year}`;
 }
 
-function generateCyclingMarkdown(data: InsertWorkout): string {
+function generateCyclingMarkdown(data: InsertWorkout, showTrainerRoadMetrics: boolean): string {
   let markdown = "";
 
   if (data.goal) markdown += `G: ${data.goal}\n`;
@@ -210,11 +221,11 @@ function generateCyclingMarkdown(data: InsertWorkout): string {
   if (data.normalizedPower) markdown += `NP: ${data.normalizedPower}\n`;
   if (data.tss) markdown += `TSS: ${data.tss}\n`;
   if (data.avgHeartRate) markdown += `Hr: ${data.avgHeartRate}\n`;
-  if (data.trainerRoadRpe) markdown += `TR-RPE: ${data.trainerRoadRpe}\n`;
+  if (showTrainerRoadMetrics && data.trainerRoadRpe) markdown += `TR-RPE: ${data.trainerRoadRpe}\n`;
   if (data.hrv) markdown += `HRV: ${data.hrv}\n`;
   if (data.rMSSD) markdown += `rMSSD: ${data.rMSSD}\n`;
   if (data.rhr) markdown += `RHR: ${data.rhr}\n`;
-  if (data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
+  if (showTrainerRoadMetrics && data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
     markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
   }
 
@@ -238,26 +249,29 @@ function generateCyclingMarkdown(data: InsertWorkout): string {
   return markdown;
 }
 
-function generateRestMarkdown(data: InsertWorkout): string {
+function generateRestMarkdown(data: InsertWorkout, showTrainerRoadMetrics: boolean): string {
   let markdown = "Rest Day\n\n";
 
   if (data.hrv) markdown += `HRV: ${data.hrv}\n`;
   if (data.rMSSD) markdown += `rMSSD: ${data.rMSSD}\n`;
   if (data.rhr) markdown += `RHR: ${data.rhr}\n`;
-  if (data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
+  if (showTrainerRoadMetrics && data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
     markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
   }
   if (data.weight) markdown += `Weight: ${data.weight}\n`;
 
-  if (data.restNotes) {
-    markdown += '\n' + formatBulletPoints(data.restNotes) + '\n';
-  }
-
   return markdown;
 }
 
-function generateOtherMarkdown(data: InsertWorkout): string {
+function generateOtherMarkdown(data: InsertWorkout, showTrainerRoadMetrics: boolean): string {
   let markdown = "";
+
+  if (data.hrv) markdown += `HRV: ${data.hrv}\n`;
+  if (data.rMSSD) markdown += `rMSSD: ${data.rMSSD}\n`;
+  if (data.rhr) markdown += `RHR: ${data.rhr}\n`;
+  if (showTrainerRoadMetrics && data.trainerRoadLgt && data.trainerRoadLgt !== 'G') {
+    markdown += `TR-LGT: ${data.trainerRoadLgt}\n`;
+  }
 
   if (data.activityGoal) markdown += `G: ${data.activityGoal}\n`;
 
@@ -268,19 +282,23 @@ function generateOtherMarkdown(data: InsertWorkout): string {
   return markdown;
 }
 
-function generateMarkdown(data: InsertWorkout): string {
+function generateMarkdown(data: InsertWorkout, showTrainerRoadMetrics: boolean): string {
   let markdown = `---\n## ${formatWorkoutDate(data.workoutDate)}\n\n`;
+
+  if (data.dailyNotes) {
+    markdown += formatBulletPoints(data.dailyNotes) + '\n\n';
+  }
 
   switch (data.entryType) {
     case "rest":
-      markdown += generateRestMarkdown(data);
+      markdown += generateRestMarkdown(data, showTrainerRoadMetrics);
       break;
     case "other":
-      markdown += generateOtherMarkdown(data);
+      markdown += generateOtherMarkdown(data, showTrainerRoadMetrics);
       break;
     case "cycling":
     default:
-      markdown += generateCyclingMarkdown(data);
+      markdown += generateCyclingMarkdown(data, showTrainerRoadMetrics);
       break;
   }
 
@@ -305,6 +323,12 @@ export default function Home() {
     key: "pedalnotes-sections",
     defaults: SECTION_DEFAULTS,
   });
+
+  const { settings, setSetting } = useSettings({
+    key: "pedalnotes-settings",
+    defaults: SETTINGS_DEFAULTS,
+  });
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const isQuickMode = useMemo(
     () => new URLSearchParams(window.location.search).get('quick') === '1',
@@ -344,8 +368,8 @@ export default function Home() {
   }
 
   useEffect(() => {
-    setMarkdownOutput((isDirty || wasRestored || isQuickMode) ? generateMarkdown(watchedValues) : "");
-  }, [watchedValues, isDirty, wasRestored, isQuickMode]);
+    setMarkdownOutput((isDirty || wasRestored || isQuickMode) ? generateMarkdown(watchedValues, settings.showTrainerRoadMetrics) : "");
+  }, [watchedValues, isDirty, wasRestored, isQuickMode, settings.showTrainerRoadMetrics]);
 
   useEffect(() => {
     if (wasRestored) {
@@ -361,7 +385,7 @@ export default function Home() {
       await form.trigger();
       autoExpandErrorSections();
     }
-    const exportMarkdown = generateMarkdown(form.getValues());
+    const exportMarkdown = generateMarkdown(form.getValues(), settings.showTrainerRoadMetrics);
     try {
       // Try modern clipboard API first
       if (navigator.clipboard && window.isSecureContext) {
@@ -410,7 +434,7 @@ export default function Home() {
       await form.trigger();
       autoExpandErrorSections();
     }
-    const exportMarkdown = generateMarkdown(form.getValues());
+    const exportMarkdown = generateMarkdown(form.getValues(), settings.showTrainerRoadMetrics);
     const blob = new Blob([exportMarkdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -432,7 +456,7 @@ export default function Home() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
+            <div className="flex flex-wrap justify-between items-center py-4 gap-2">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-brand-blue rounded-lg flex items-center justify-center">
                   <Zap className="w-5 h-5 text-white" />
@@ -447,6 +471,22 @@ export default function Home() {
                 >
                   Full form
                 </a>
+                <a
+                  href={REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="View source on GitHub"
+                  className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+                >
+                  <Github className="w-5 h-5" />
+                </a>
+                <button
+                  onClick={() => setSettingsOpen(true)}
+                  aria-label="Open settings"
+                  className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+                >
+                  <SettingsIcon className="w-5 h-5" />
+                </button>
                 <button
                   onClick={toggleTheme}
                   aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
@@ -631,6 +671,12 @@ export default function Home() {
             </Card>
           )}
         </div>
+        <SettingsPanel
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          showTrainerRoadMetrics={settings.showTrainerRoadMetrics}
+          onShowTrainerRoadMetricsChange={(value) => setSetting("showTrainerRoadMetrics", value)}
+        />
       </div>
     );
   }
@@ -650,13 +696,31 @@ export default function Home() {
             <div className="text-sm text-gray-500 dark:text-gray-400 text-center sm:text-right">
               Privacy-first training journal for cyclists
             </div>
-            <button
-              onClick={toggleTheme}
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
-            >
-              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
+            <div className="flex items-center gap-1">
+              <a
+                href={REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View source on GitHub"
+                className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+              >
+                <Github className="w-5 h-5" />
+              </a>
+              <button
+                onClick={() => setSettingsOpen(true)}
+                aria-label="Open settings"
+                className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+              >
+                <SettingsIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={toggleTheme}
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+              >
+                {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -705,6 +769,35 @@ export default function Home() {
                       />
                     </div>
 
+                    {/* Daily Notes — all entry types */}
+                    <CollapsibleSection
+                      id="daily-notes"
+                      title="Daily Notes"
+                      isOpen={sectionStates["daily-notes"]}
+                      onOpenChange={(open) => setSection("daily-notes", open)}
+                      hasData={!!watchedValues.dailyNotes}
+                    >
+                      <FormField
+                        control={form.control}
+                        name="dailyNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Textarea
+                                rows={4}
+                                placeholder="Life context, mood, decisions, stressors... One thought per line."
+                                className="resize-y"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <p className="text-xs text-gray-500">Each line will be formatted as a bullet point</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CollapsibleSection>
+
                     {/* Entry Type Selector */}
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                       <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white mb-3">
@@ -742,7 +835,7 @@ export default function Home() {
                         !!watchedValues.goal ||
                         watchedValues.rpe !== 5 ||
                         watchedValues.feel !== "N" ||
-                        watchedValues.trainerRoadRpe !== undefined
+                        (settings.showTrainerRoadMetrics && watchedValues.trainerRoadRpe !== undefined)
                       }
                     >
                       <FormField
@@ -812,6 +905,7 @@ export default function Home() {
                         }}
                       />
 
+                      {settings.showTrainerRoadMetrics && (
                       <FormField
                         control={form.control}
                         name="trainerRoadRpe"
@@ -892,6 +986,7 @@ export default function Home() {
                           );
                         }}
                       />
+                      )}
 
                       <FormField
                         control={form.control}
@@ -1119,8 +1214,8 @@ export default function Home() {
                     </CollapsibleSection>
                     )}
 
-                    {/* Recovery Metrics Section — Cycling + Rest */}
-                    {(entryType === "cycling" || entryType === "rest") && (
+                    {/* Recovery Metrics Section — Cycling + Rest + Other */}
+                    {(entryType === "cycling" || entryType === "rest" || entryType === "other") && (
                     <CollapsibleSection
                       id="recovery-metrics"
                       title="Recovery Metrics"
@@ -1130,7 +1225,7 @@ export default function Home() {
                         !!watchedValues.hrv ||
                         watchedValues.rMSSD !== undefined ||
                         watchedValues.rhr !== undefined ||
-                        (!!watchedValues.trainerRoadLgt && watchedValues.trainerRoadLgt !== "G")
+                        (settings.showTrainerRoadMetrics && !!watchedValues.trainerRoadLgt && watchedValues.trainerRoadLgt !== "G")
                       }
                     >
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1200,6 +1295,7 @@ export default function Home() {
                           )}
                         />
 
+                        {settings.showTrainerRoadMetrics && (
                         <FormField
                           control={form.control}
                           name="trainerRoadLgt"
@@ -1227,6 +1323,7 @@ export default function Home() {
                             </FormItem>
                           )}
                         />
+                        )}
                       </div>
                     </CollapsibleSection>
                     )}
@@ -1313,9 +1410,7 @@ export default function Home() {
                       title="Rest Day"
                       isOpen={sectionStates["rest-day"]}
                       onOpenChange={(open) => setSection("rest-day", open)}
-                      hasData={
-                        watchedValues.weight !== undefined || !!watchedValues.restNotes
-                      }
+                      hasData={watchedValues.weight !== undefined}
                     >
                       <FormField
                         control={form.control}
@@ -1341,29 +1436,6 @@ export default function Home() {
                         )}
                       />
 
-                      <FormField
-                        control={form.control}
-                        name="restNotes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <NotebookPen className="w-4 h-4 text-blue-500" />
-                              Notes
-                            </FormLabel>
-                            <FormControl>
-                              <Textarea
-                                rows={6}
-                                placeholder="How are you feeling? Life context, decisions, mood..."
-                                className="resize-y"
-                                {...field}
-                                value={field.value ?? ""}
-                              />
-                            </FormControl>
-                            <p className="text-xs text-gray-500">Each line will be formatted as a bullet point</p>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                     </CollapsibleSection>
                     )}
 
@@ -1476,6 +1548,12 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <SettingsPanel
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        showTrainerRoadMetrics={settings.showTrainerRoadMetrics}
+        onShowTrainerRoadMetricsChange={(value) => setSetting("showTrainerRoadMetrics", value)}
+      />
     </div>
   );
 }

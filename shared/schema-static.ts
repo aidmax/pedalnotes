@@ -8,6 +8,7 @@ export const insertWorkoutSchema = z.object({
   // --- Shared (all types) ---
   entryType: entryTypeEnum,
   workoutDate: z.string(),
+  dailyNotes: z.string().optional(),
 
   // --- Cycling-only (optional at schema level; enforced by superRefine for cycling) ---
   goal: z.string().optional(),
@@ -34,7 +35,6 @@ export const insertWorkoutSchema = z.object({
 
   // --- Rest-only (reuses existing HRV/rMSSD/RHR/TR-LGT from recovery metrics) ---
   weight: z.number().positive().optional(),
-  restNotes: z.string().optional(),
 
   // --- Other-only ---
   activityGoal: z.string().optional(),
