@@ -7,6 +7,7 @@ const SECTIONS_KEY = "pedalnotes-sections-test";
 const defaults: Record<SectionId, boolean> = {
   "core-metrics": true,
   "fueling": false,
+  environment: false,
   "performance-metrics": false,
   "recovery-metrics": false,
   "reflection": true,
@@ -40,6 +41,7 @@ describe("useSectionState", () => {
     const persisted: Record<SectionId, boolean> = {
       "core-metrics": false,
       "fueling": true,
+      environment: true,
       "performance-metrics": true,
       "recovery-metrics": false,
       "reflection": false,

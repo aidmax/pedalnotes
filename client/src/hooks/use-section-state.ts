@@ -3,6 +3,7 @@ import { useState } from "react";
 export type SectionId =
   | "core-metrics"
   | "fueling"
+  | "environment"
   | "performance-metrics"
   | "recovery-metrics"
   | "reflection"
@@ -12,6 +13,7 @@ export type SectionId =
 const ALL_SECTION_IDS: SectionId[] = [
   "core-metrics",
   "fueling",
+  "environment",
   "performance-metrics",
   "recovery-metrics",
   "reflection",
