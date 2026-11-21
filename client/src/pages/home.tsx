@@ -205,8 +205,8 @@ function generateCyclingMarkdown(data: InsertWorkout): string {
   if (data.choIntakePre) markdown += `Ci-Pre: ${data.choIntakePre}\n`;
   if (data.choIntake) markdown += `Ci: ${data.choIntake}\n`;
   if (data.choIntakePost) markdown += `Ci-Post: ${data.choIntakePost}\n`;
-  if (data.temperature != null) markdown += `Temperature: ${data.temperature} °C\n`;
-  if (data.humidity != null) markdown += `Humidity: ${data.humidity}%\n`;
+  if (data.temperature != null) markdown += `Temp: ${data.temperature} °C\n`;
+  if (data.humidity != null) markdown += `Hum: ${data.humidity}%\n`;
   if (data.normalizedPower) markdown += `NP: ${data.normalizedPower}\n`;
   if (data.tss) markdown += `TSS: ${data.tss}\n`;
   if (data.avgHeartRate) markdown += `Hr: ${data.avgHeartRate}\n`;
