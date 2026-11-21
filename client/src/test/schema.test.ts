@@ -22,6 +22,17 @@ describe('Workout Schema Validation', () => {
     description: 'Test description'
   };
 
+  it('accepts subzero temperatures and both humidity limits', () => {
+    for (const humidity of [0, 100]) {
+      const values = { temperature: -2.5, humidity };
+      expect(insertWorkoutSchema.parse({ ...validWorkout, ...values })).toMatchObject(values);
+    }
+  });
+
+  it.each([-1, 101])('rejects humidity of %i percent', (humidity) => {
+    expect(insertWorkoutSchema.safeParse({ ...validWorkout, humidity }).success).toBe(false);
+  });
+
   it('should validate a complete valid workout', () => {
     const result = insertWorkoutSchema.safeParse(validWorkout);
     expect(result.success).toBe(true);

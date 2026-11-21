@@ -17,6 +17,8 @@ export const insertWorkoutSchema = z.object({
   choIntakePre: z.string().optional(),
   choIntake: z.string().optional(),
   choIntakePost: z.string().optional(),
+  temperature: z.number().finite().optional(),
+  humidity: z.number().min(0).max(100).optional(),
   normalizedPower: z.number().positive().optional(),
   tss: z.number().positive().optional(),
   avgHeartRate: z.number().positive().optional(),

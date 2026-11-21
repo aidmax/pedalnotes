@@ -4,6 +4,7 @@ export type SectionId =
   | "daily-notes"
   | "core-metrics"
   | "fueling"
+  | "environment"
   | "performance-metrics"
   | "recovery-metrics"
   | "reflection"
@@ -14,6 +15,7 @@ const ALL_SECTION_IDS: SectionId[] = [
   "daily-notes",
   "core-metrics",
   "fueling",
+  "environment",
   "performance-metrics",
   "recovery-metrics",
   "reflection",

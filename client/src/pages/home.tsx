@@ -51,6 +51,7 @@ const SECTION_DEFAULTS: Record<SectionId, boolean> = {
   "daily-notes": true,
   "core-metrics": true,
   "fueling": false,
+  environment: false,
   "performance-metrics": false,
   "recovery-metrics": false,
   "reflection": true,
@@ -70,6 +71,8 @@ const FIELD_TO_SECTION: Partial<Record<keyof InsertWorkout, SectionId>> = {
   choIntakePre: "fueling",
   choIntake: "fueling",
   choIntakePost: "fueling",
+  temperature: "environment",
+  humidity: "environment",
   normalizedPower: "performance-metrics",
   tss: "performance-metrics",
   avgHeartRate: "performance-metrics",
@@ -99,7 +102,7 @@ const entryTypeSubtitles: Record<EntryType, string> = {
 };
 
 const VISIBLE_SECTIONS_BY_TYPE: Record<EntryType, SectionId[]> = {
-  cycling: ["daily-notes", "core-metrics", "fueling", "performance-metrics", "recovery-metrics", "reflection"],
+  cycling: ["daily-notes", "core-metrics", "fueling", "environment", "performance-metrics", "recovery-metrics", "reflection"],
   rest: ["daily-notes", "recovery-metrics", "rest-day"],
   other: ["daily-notes", "recovery-metrics", "activity"],
 };
@@ -149,6 +152,8 @@ function getDefaultWorkoutValues(): InsertWorkout {
     choIntakePre: "",
     choIntake: "",
     choIntakePost: "",
+    temperature: undefined,
+    humidity: undefined,
     normalizedPower: undefined,
     tss: undefined,
     avgHeartRate: undefined,
@@ -211,6 +216,8 @@ function generateCyclingMarkdown(data: InsertWorkout, showTrainerRoadMetrics: bo
   if (data.choIntakePre) markdown += `Ci-Pre: ${data.choIntakePre}\n`;
   if (data.choIntake) markdown += `Ci: ${data.choIntake}\n`;
   if (data.choIntakePost) markdown += `Ci-Post: ${data.choIntakePost}\n`;
+  if (data.temperature != null) markdown += `Temp: ${data.temperature} °C\n`;
+  if (data.humidity != null) markdown += `Hum: ${data.humidity}%\n`;
   if (data.normalizedPower) markdown += `NP: ${data.normalizedPower}\n`;
   if (data.tss) markdown += `TSS: ${data.tss}\n`;
   if (data.avgHeartRate) markdown += `Hr: ${data.avgHeartRate}\n`;
@@ -1081,6 +1088,43 @@ export default function Home() {
                         )}
                       />
                     </CollapsibleSection>
+                    )}
+
+                    {entryType === "cycling" && (
+                      <CollapsibleSection
+                        id="environment"
+                        title="Environment"
+                        isOpen={sectionStates.environment}
+                        onOpenChange={(open) => setSection("environment", open)}
+                        hasData={watchedValues.temperature != null || watchedValues.humidity != null}
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {(["temperature", "humidity"] as const).map((name) => (
+                            <FormField
+                              key={name}
+                              control={form.control}
+                              name={name}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{name === "temperature" ? "Temperature (°C)" : "Humidity (%)"}</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      type="number"
+                                      step="any"
+                                      min={name === "humidity" ? 0 : undefined}
+                                      max={name === "humidity" ? 100 : undefined}
+                                      value={field.value ?? ""}
+                                      onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.valueAsNumber)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </CollapsibleSection>
                     )}
 
                     {/* Performance Metrics Section — Cycling only */}
